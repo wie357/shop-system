@@ -260,6 +260,18 @@
     </div>
 
     <div class="card">
+      <h2>☁️ 雲端同步</h2>
+      <p class="muted">用「店家代碼 + 密碼」把資料存到雲端;在另一台裝置輸入相同代碼與密碼即可下載。手機上傳、電腦下載皆可。</p>
+      <div class="field" style="margin-bottom:8px;"><label>店家代碼(自訂,例:fanbu2026)</label><input id="cloudCode" placeholder="輸入你的店家代碼"></div>
+      <div class="field" style="margin-bottom:10px;"><label>密碼 / PIN(保護你的資料)</label><input id="cloudPin" type="password" placeholder="輸入密碼"></div>
+      <div class="grid2">
+        <button class="btn green" onclick="cloudUpload()">☁️⬆ 上傳雲端</button>
+        <button class="btn" onclick="cloudDownload()">☁️⬇ 下載雲端</button>
+      </div>
+      <p class="muted center" style="margin-top:8px; font-size:12px;">⚠️ 下載會以雲端資料覆蓋本機;上傳會以本機資料覆蓋雲端。請記住代碼與密碼,忘記無法救回。</p>
+    </div>
+
+    <div class="card">
       <h2>⚙️ 資料管理</h2>
       <div class="grid2">
         <button class="btn gray sm" onclick="backupData()">💾 備份資料</button>
@@ -781,6 +793,58 @@ function exportExcel(){
   toast('已匯出 Excel');
 }
 
+/* ================= 雲端同步(Supabase) ================= */
+const SUPABASE_URL = 'https://uofrbuofyfcatgbjxjde.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZnJidW9meWZjYXRnYmp4amRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE3NzMsImV4cCI6MjA5NTcyNzc3M30.ZKu0i73mpEmem9R3m3p_TXvBMab3XG5G8CSJBiyAsXA';
+function cloudErrMsg(m){
+  if(m==='PIN_MISMATCH') return '密碼錯誤';
+  if(m==='NOT_FOUND') return '找不到這個店家代碼(雲端尚無此資料)';
+  if(m==='CODE_REQUIRED') return '請輸入店家代碼';
+  if(m==='PIN_REQUIRED') return '請輸入密碼';
+  return m || '連線發生問題';
+}
+async function callRPC(fn, body){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method:'POST',
+    headers:{ 'apikey':SUPABASE_ANON, 'Authorization':'Bearer '+SUPABASE_ANON, 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  const out = await res.json().catch(()=>null);
+  if(!res.ok) throw new Error(cloudErrMsg(out && out.message));
+  return out;
+}
+function cloudCreds(){
+  const code = document.getElementById('cloudCode').value.trim();
+  const pin  = document.getElementById('cloudPin').value.trim();
+  return {code, pin};
+}
+async function cloudUpload(){
+  const {code, pin} = cloudCreds();
+  if(!code || !pin){ toast('請輸入店家代碼與密碼'); return; }
+  if(!confirm(`要把本機資料上傳到雲端嗎?\n店家代碼:${code}\n(若雲端已有同代碼資料,會被本機覆蓋)`)) return;
+  const data = {products, sales, stocktakes, uidseq:_uidSeq, version:1, savedAt:nowISO()};
+  try{
+    const r = await callRPC('save_backup', {p_code:code, p_pin:pin, p_data:data});
+    localStorage.setItem('fb_cloud_code', code); localStorage.setItem('fb_cloud_pin', pin);
+    toast(r==='created' ? '已建立雲端備份 ☁️' : '已更新雲端備份 ☁️');
+  }catch(e){ alert('上傳失敗:'+e.message); }
+}
+async function cloudDownload(){
+  const {code, pin} = cloudCreds();
+  if(!code || !pin){ toast('請輸入店家代碼與密碼'); return; }
+  if(!confirm(`要從雲端下載並「覆蓋本機目前所有資料」嗎?\n店家代碼:${code}`)) return;
+  try{
+    const d = await callRPC('load_backup', {p_code:code, p_pin:pin});
+    if(!d || !Array.isArray(d.products)) throw new Error('雲端資料格式不正確');
+    products = d.products||[]; sales = d.sales||[]; stocktakes = d.stocktakes||[];
+    if(typeof d.uidseq === 'number'){ _uidSeq = d.uidseq; DB.set('fb_uidseq', _uidSeq); }
+    saveProducts(); saveSales(); saveStocktakes();
+    localStorage.setItem('fb_cloud_code', code); localStorage.setItem('fb_cloud_pin', pin);
+    switchTab('report'); renderReport();
+    toast(`已從雲端下載(商品 ${products.length} 項)`);
+  }catch(e){ alert('下載失敗:'+e.message); }
+}
+
 /* ================= 備份 / 還原 / 重設 ================= */
 function backupData(){
   const data={products,sales,stocktakes,exportedAt:nowISO(),version:1};
@@ -985,6 +1049,14 @@ if(products.length===0 && sales.length===0 && stocktakes.length===0 && !localSto
   let changed=false;
   products.forEach(p=>{ if(!p.code || !p.code.trim()){ p.code=nextProductCode(); changed=true; } });
   if(changed) saveProducts();
+})();
+
+/* 帶回上次使用的雲端代碼與密碼(同一裝置方便) */
+(function(){
+  const c = localStorage.getItem('fb_cloud_code'); const p = localStorage.getItem('fb_cloud_pin');
+  const ce = document.getElementById('cloudCode'), pe = document.getElementById('cloudPin');
+  if(ce && c) ce.value = c;
+  if(pe && p) pe.value = p;
 })();
 
 /* 初始化 */
