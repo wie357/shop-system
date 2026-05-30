@@ -1,5 +1,5 @@
 /* 販賣部系統 Service Worker — 離線快取 */
-const CACHE = 'fanbu-v2';
+const CACHE = 'fanbu-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -7,7 +7,8 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './jsQR.js',
-  './qrcode.js'
+  './qrcode.js',
+  './xlsx.full.min.js'
 ];
 
 self.addEventListener('install', e => {

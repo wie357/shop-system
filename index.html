@@ -254,6 +254,12 @@
     </div>
 
     <div class="card">
+      <h2>📑 Excel 報表</h2>
+      <p class="muted">一次匯出含「商品清單 / 盤點表 / 營業報表」三個分頁的 Excel,盤點表與營業報表內建公式,自動算差異與加總。</p>
+      <button class="btn block" style="background:#15803d;" onclick="exportExcel()">⬇ 匯出 Excel(.xlsx)</button>
+    </div>
+
+    <div class="card">
       <h2>⚙️ 資料管理</h2>
       <div class="grid2">
         <button class="btn gray sm" onclick="backupData()">💾 備份資料</button>
@@ -341,6 +347,7 @@
 
 <script src="jsQR.js"></script>
 <script src="qrcode.js"></script>
+<script src="xlsx.full.min.js"></script>
 <script>
 /* ================= 資料層 ================= */
 const DB = {
@@ -717,6 +724,62 @@ function exportStockCSV(){
   toast('已匯出盤點 CSV');
 }
 function dateStamp(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`; }
+
+/* ================= 匯出 Excel(三分頁,含公式) ================= */
+function exportExcel(){
+  if(typeof XLSX==='undefined'){ toast('Excel 元件尚未載入,請重新整理'); return; }
+  if(products.length===0){ toast('尚無商品'); return; }
+  const wb = XLSX.utils.book_new();
+  const sorted = products.slice().sort((a,b)=>(a.code||'').localeCompare(b.code||'','zh-Hant'));
+
+  /* 分頁 1:商品清單 */
+  const prodAOA = [['代碼','品名','分類','售價','成本','庫存']];
+  sorted.forEach(p=> prodAOA.push([p.code||'', p.name, p.category||'', Number(p.price)||0, Number(p.cost)||0, Number(p.stock)||0]));
+  const ws1 = XLSX.utils.aoa_to_sheet(prodAOA);
+  ws1['!cols'] = [{wch:8},{wch:18},{wch:10},{wch:8},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws1, '商品清單');
+
+  /* 分頁 2:盤點表(實際數量留空,差異用公式 =實際-帳面)
+     公式儲存格需附快取值,否則 SheetJS 存檔會丟棄公式 */
+  const stockAOA = [['代碼','品名','帳面庫存','實際數量','差異(實際-帳面)']];
+  sorted.forEach(p=> stockAOA.push([p.code||'', p.name, Number(p.stock)||0, '', '']));
+  const ws2 = XLSX.utils.aoa_to_sheet(stockAOA);
+  sorted.forEach((p,i)=>{ const r=i+2; ws2['E'+r] = {t:'str', v:'', f:`IF(D${r}="","",D${r}-C${r})`}; });
+  ws2['!cols'] = [{wch:8},{wch:18},{wch:10},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws2, '盤點表');
+
+  /* 分頁 3:營業報表(每日彙總,含合計列 SUM) */
+  const byDay = {};
+  sales.forEach(s=>{
+    const d=new Date(s.datetime);
+    const key=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    if(!byDay[key]) byDay[key]={count:0,items:0,rev:0,profit:0};
+    byDay[key].count++;
+    s.items.forEach(it=>{ byDay[key].items+=it.qty; byDay[key].rev+=it.price*it.qty; byDay[key].profit+=(it.price-(it.cost||0))*it.qty; });
+  });
+  const repAOA = [['日期','交易筆數','售出件數','營業額','預估毛利']];
+  const tot = {count:0, items:0, rev:0, profit:0};
+  Object.keys(byDay).sort().forEach(k=>{
+    const v=byDay[k];
+    repAOA.push([k, v.count, v.items, money(v.rev), money(v.profit)]);
+    tot.count+=v.count; tot.items+=v.items; tot.rev+=v.rev; tot.profit+=v.profit;
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(repAOA);
+  const dataRows = repAOA.length;          // 含表頭;資料列 = 2..dataRows
+  if(dataRows > 1){
+    const tr = dataRows + 1;                // 合計列
+    ws3['A'+tr] = {t:'s', v:'合計'};
+    // 公式須附快取值才不會被 SheetJS 丟棄
+    const cache = {B:tot.count, C:tot.items, D:money(tot.rev), E:money(tot.profit)};
+    ['B','C','D','E'].forEach(col=>{ ws3[col+tr] = {t:'n', v:cache[col], f:`SUM(${col}2:${col}${dataRows})`}; });
+    ws3['!ref'] = `A1:E${tr}`;
+  }
+  ws3['!cols'] = [{wch:12},{wch:10},{wch:10},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws3, '營業報表');
+
+  XLSX.writeFile(wb, '販賣部報表_'+dateStamp()+'.xlsx');
+  toast('已匯出 Excel');
+}
 
 /* ================= 備份 / 還原 / 重設 ================= */
 function backupData(){
