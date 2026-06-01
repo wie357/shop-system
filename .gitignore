@@ -1,0 +1,29 @@
+# ===== 機密檔案(絕對不要上傳)=====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+credentials.json
+service-account*.json
+secrets.*
+
+# ===== 作業系統垃圾檔 =====
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+
+# ===== 編輯器 / 暫存檔 =====
+*.log
+*.tmp
+*~
+.vscode/
+.idea/
+
+# ===== 套件資料夾(若將來用到 npm)=====
+node_modules/
