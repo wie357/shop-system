@@ -1,5 +1,5 @@
 /* 販賣部系統 Service Worker — 離線快取 */
-const CACHE = 'fanbu-v13';
+const CACHE = 'fanbu-v14';
 const ASSETS = [
   './',
   './index.html',

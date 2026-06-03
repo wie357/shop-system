@@ -773,9 +773,12 @@ async function renderSalesReport(){
     // 依日期彙總
     const byDay={};
     data.forEach(r=>{ if(!byDay[r.date]) byDay[r.date]={sold:0,amt:0,items:0}; byDay[r.date].amt+=Number(r.subtotal); byDay[r.date].sold+=Number(r.sold); if(Number(r.sold)>0) byDay[r.date].items++; });
-    let html = `<table><tr><th>日期</th><th class="num">售出件數</th><th class="num">有銷售品項</th><th class="num">銷售總額</th></tr>`;
-    Object.keys(byDay).sort().reverse().forEach(d=>{ const v=byDay[d]; html+=`<tr><td>${d}</td><td class="num">${v.sold}</td><td class="num">${v.items}</td><td class="num">$${money(v.amt)}</td></tr>`; });
+    const mgr = isManager();
+    let html = `<table><tr><th>日期</th><th class="num">售出件數</th><th class="num">有銷售品項</th><th class="num">銷售總額</th>${mgr?'<th></th>':''}</tr>`;
+    Object.keys(byDay).sort().reverse().forEach(d=>{ const v=byDay[d];
+      html+=`<tr><td>${d}</td><td class="num">${v.sold}</td><td class="num">${v.items}</td><td class="num">$${money(v.amt)}</td>${mgr?`<td class="num"><button class="btn red sm" onclick="deleteDailyByDate('${d}')">🗑</button></td>`:''}</tr>`; });
     html += `</table>`;
+    if(mgr) html += `<p class="muted" style="font-size:12px; margin-top:8px;">🗑 = 刪除該日整批日結紀錄(不可復原)。</p>`;
     el.innerHTML = html;
   }catch(e){ el.innerHTML=`<div class="empty">載入失敗</div>`; showNetBad(true); }
 }
@@ -784,14 +787,50 @@ async function renderStockReport(){
   try{
     const data = await sbSelect('stocktakes', `dept=eq.${enc(currentDept)}&order=date.desc,id.desc&limit=500`);
     if(data.length===0){ el.innerHTML=`<div class="empty">尚無盤點紀錄</div>`; return; }
-    let html = `<table><tr><th>日期</th><th>商品</th><th class="num">系統</th><th class="num">實際</th><th class="num">差異</th><th>狀態</th></tr>`;
+    const mgr = isManager();
+    // 列出各盤點日期供整批刪
+    const dates = Array.from(new Set(data.map(r=>r.date)));
+    let html = '';
+    if(mgr && dates.length){
+      html += `<div class="row" style="margin-bottom:10px; gap:6px; flex-wrap:wrap;"><span class="muted" style="font-size:12px;">整批刪某日:</span>`
+        + dates.map(d=>`<button class="btn gray sm" onclick="deleteStockByDate('${d}')">🗑 ${d}</button>`).join('') + `</div>`;
+    }
+    html += `<table><tr><th>日期</th><th>商品</th><th class="num">系統</th><th class="num">實際</th><th class="num">差異</th><th>狀態</th>${mgr?'<th></th>':''}</tr>`;
     data.forEach(r=>{
       const cls = r.diff===0?'':(r.status==='需主管確認'?'diff-warn':(r.diff>0?'diff-pos':'diff-neg'));
-      html+=`<tr><td>${r.date}</td><td>${esc(r.product_name)}</td><td class="num">${r.system_stock}</td><td class="num">${r.actual_stock}</td><td class="num ${cls}">${r.diff>0?'+':''}${r.diff}</td><td>${esc(r.status)}</td></tr>`;
+      html+=`<tr><td>${r.date}</td><td>${esc(r.product_name)}</td><td class="num">${r.system_stock}</td><td class="num">${r.actual_stock}</td><td class="num ${cls}">${r.diff>0?'+':''}${r.diff}</td><td>${esc(r.status)}</td>${mgr?`<td class="num"><button class="btn red sm" onclick="deleteStockOne(${r.id})">🗑</button></td>`:''}</tr>`;
     });
     html+=`</table>`;
     el.innerHTML = html;
   }catch(e){ el.innerHTML=`<div class="empty">載入失敗</div>`; showNetBad(true); }
+}
+
+/* ----- 刪除紀錄(僅主管)----- */
+async function deleteDailyByDate(date){
+  if(!isManager()){ alert('此操作需要主管帳號'); return; }
+  if(!confirm(`確定刪除【${currentDept}】${date} 的所有日結紀錄?\n⚠️ 不可復原。\n(此操作不會自動回復庫存,如需回復請另行調整)`)) return;
+  try{
+    const recs = await sbSelect('daily_entries', `dept=eq.${enc(currentDept)}&date=eq.${date}&select=id`);
+    for(const r of recs) await sbDelete('daily_entries', r.id);
+    toast(`已刪除 ${date} 日結(${recs.length} 筆)`);
+    renderSalesReport();
+  }catch(e){ alert('刪除失敗:'+e.message); }
+}
+async function deleteStockByDate(date){
+  if(!isManager()){ alert('此操作需要主管帳號'); return; }
+  if(!confirm(`確定刪除【${currentDept}】${date} 的所有盤點紀錄?\n⚠️ 不可復原。`)) return;
+  try{
+    const recs = await sbSelect('stocktakes', `dept=eq.${enc(currentDept)}&date=eq.${date}&select=id`);
+    for(const r of recs) await sbDelete('stocktakes', r.id);
+    toast(`已刪除 ${date} 盤點(${recs.length} 筆)`);
+    renderStockReport();
+  }catch(e){ alert('刪除失敗:'+e.message); }
+}
+async function deleteStockOne(id){
+  if(!isManager()){ alert('此操作需要主管帳號'); return; }
+  if(!confirm('確定刪除這筆盤點紀錄?\n⚠️ 不可復原。')) return;
+  try{ await sbDelete('stocktakes', id); toast('已刪除'); renderStockReport(); }
+  catch(e){ alert('刪除失敗:'+e.message); }
 }
 
 /* ================= 商品主檔 ================= */
