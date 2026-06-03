@@ -209,6 +209,16 @@
         <div id="stockReport"><div class="loading">載入中…</div></div>
       </div>
     </div>
+
+    <div class="card">
+      <h2>🖨 列印用盤點表</h2>
+      <p class="muted">下載一份「像原始手寫盤點表」版面的 Excel:存貨欄已填入目前最新庫存,並可選日期把當天日結的進貨/退貨/銷售/員購/招待一併帶入,直接列印核對。</p>
+      <div class="row" style="margin:8px 0;">
+        <div style="flex:1;"><label style="margin:0;">帶入哪天的日結數字</label><input type="date" id="printDate"></div>
+      </div>
+      <button class="btn block" style="background:#0e7490;" onclick="exportPrintSheet()">⬇ 下載列印用盤點表(Excel)</button>
+      <p class="muted center" style="margin-top:8px; font-size:12px;">目前部門:<b id="printDeptLabel">—</b>。下載後用 Excel / 試算表開啟即可列印。</p>
+    </div>
   </div>
 </section>
 
@@ -368,7 +378,10 @@ function switchTab(tab){
   window.scrollTo(0,0);
   if(tab==='daily') renderDaily();
   if(tab==='stock') renderStock();
-  if(tab==='report') renderReport();
+  if(tab==='report'){ renderReport();
+    const pd=document.getElementById('printDate'); if(pd&&!pd.value) pd.value=todayStr();
+    const pl=document.getElementById('printDeptLabel'); if(pl) pl.textContent=currentDept;
+  }
   if(tab==='products') renderProducts();
 }
 
@@ -692,6 +705,49 @@ async function exportStockExcel(){
     XLSX.writeFile(wb, `${currentDept}_盤點差異表_${dateStamp()}.xlsx`);
     toast('已匯出 Excel');
   }catch(e){ alert('匯出失敗:'+e.message); }
+}
+
+/* ================= 列印用盤點表(仿原始手寫表版面) ================= */
+async function exportPrintSheet(){
+  if(typeof XLSX==='undefined'){ toast('Excel 元件未載入'); return; }
+  try{
+    // 取目前部門啟用商品(已含最新庫存 stock)
+    const prods = products.filter(p=>p.active!==false);
+    if(prods.length===0){ toast('此部門尚無商品'); return; }
+    // 取某日的日結,做成 code -> 異動 的對照
+    const date = document.getElementById('printDate').value;
+    let byCode = {};
+    if(date){
+      const de = await sbSelect('daily_entries', `dept=eq.${enc(currentDept)}&date=eq.${date}`);
+      de.forEach(r=>{ byCode[r.product_code]={purchase:r.purchase,return_qty:r.return_qty,sold:r.sold,staff_buy:r.staff_buy,treat:r.treat}; });
+    }
+    const title = currentDept==='泳裝部' ? '大新店泳裝部(泳具)日盤點表' : '販賣部盤點表';
+    const aoa = [];
+    aoa.push([title]);
+    aoa.push([`日期：${date||'__________'}    班別：__________    經辦人：__________`]);
+    // 表頭(沿用原表欄位 + 招待)
+    aoa.push(['編號','品名','存貨','進貨','退貨','員購','招待','銷貨','售價','小計']);
+    prods.forEach(p=>{
+      const m = byCode[p.code]||{};
+      const sold = Number(m.sold)||'';
+      const sub = sold!=='' ? money(sold*Number(p.price||0)) : '';
+      aoa.push([
+        p.code, p.name, Number(p.stock||0),
+        Number(m.purchase)||'', Number(m.return_qty)||'', Number(m.staff_buy)||'', Number(m.treat)||'',
+        sold, Number(p.price||0), sub
+      ]);
+    });
+    aoa.push([]);
+    aoa.push(['','','合計金額：__________','','','','','','','']);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:7},{wch:16},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:9}];
+    // 合併標題列(跨10欄)
+    ws['!merges']=[{s:{c:0,r:0},e:{c:9,r:0}},{s:{c:0,r:1},e:{c:9,r:1}}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, currentDept+'盤點表');
+    XLSX.writeFile(wb, `${currentDept}_列印盤點表_${date?date.replace(/-/g,''):dateStamp()}.xlsx`);
+    toast('已下載列印用盤點表');
+  }catch(e){ alert('產生失敗:'+e.message); }
 }
 
 /* ================= 商品 Excel 匯出 / 匯入 ================= */
