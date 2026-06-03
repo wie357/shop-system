@@ -27,3 +27,7 @@ desktop.ini
 
 # ===== 套件資料夾(若將來用到 npm)=====
 node_modules/
+
+# 暫存分析檔
+/shop.json
+/plan.json
