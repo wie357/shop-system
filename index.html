@@ -75,6 +75,8 @@
   table.daily-tbl tr.grp-total td{background:#ecfdf5 !important; font-weight:800; color:#065f46; border-top:2px solid #5eead4; border-bottom:2px solid #5eead4;}
   table.daily-tbl tr.grp-total td.name{background:#ecfdf5 !important;}
   .sold-hl{color:var(--blue);}
+  .phint{font-size:10px; color:#0d9488; font-weight:600; margin-top:1px; line-height:1.1;}
+  table.daily-tbl thead th .phint{color:#5eead4;}
   /* 盤點 */
   .stk-item{display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--line);}
   .stk-item:last-child{border-bottom:none;}
@@ -480,7 +482,23 @@ function switchTab(tab){
 /* ================= 日結表 ================= */
 function activeTrackedProducts(){ return products.filter(p=>p.active!==false); }
 function dval(id, key){ return (dailyInput[id] && dailyInput[id][key]!==undefined && dailyInput[id][key]!=='') ? Number(dailyInput[id][key]) : 0; }
-function closeStock(p){ // 結算後庫存
+// 解析商品的多重價格(存在 note 的 JSON);沒有就只有一般價
+function getPrices(p){
+  let pr = { normal:Number(p.price||0) };
+  if(p.note){ try{ const o=JSON.parse(p.note); if(o && o.prices){ pr = Object.assign(pr, o.prices); } }catch(e){} }
+  return pr;
+}
+function hasMultiPrice(p){ const pr=getPrices(p); return pr.staff!==undefined || pr.treat!==undefined; }
+// 員工價(員購用):無則回一般價;招待價:無則 0
+function staffPriceOf(p){ const pr=getPrices(p); return pr.staff!==undefined?Number(pr.staff):Number(p.price||0); }
+function treatPriceOf(p){ const pr=getPrices(p); return pr.treat!==undefined?Number(pr.treat):0; }
+// 日結銷售小計 = 一般銷售×一般價 + 員購×員工價 + 招待×招待價
+function dailySubtotal(p){
+  return money( dval(p.id,'sold')*Number(p.price||0)
+    + dval(p.id,'staff_buy')*staffPriceOf(p)
+    + dval(p.id,'treat')*treatPriceOf(p) );
+}
+function closeStock(p){ // 結算後庫存(三種售出都扣同一庫存)
   return Number(p.stock||0) + dval(p.id,'purchase') - dval(p.id,'return_qty') - dval(p.id,'sold') - dval(p.id,'staff_buy') - dval(p.id,'treat');
 }
 function renderDaily(){
@@ -494,16 +512,19 @@ function renderDaily(){
   const body = list.map(p=>{
     const inp = dailyInput[p.id]||{};
     const g = k => inp[k]!==undefined?inp[k]:'';
-    const sub = money(dval(p.id,'sold')*Number(p.price||0));
+    const sub = dailySubtotal(p);
     const cs = closeStock(p);
+    const sp = staffPriceOf(p), tp = treatPriceOf(p);
+    const spHint = hasMultiPrice(p) ? `<div class="phint">$${sp}</div>` : '';
+    const tpHint = hasMultiPrice(p) ? `<div class="phint">$${tp}</div>` : '';
     return `<tr>
       <td class="name">${esc(p.name)}<div class="code">${esc(p.code)}</div></td>
       <td>${p.stock||0}</td>
       <td><input type="number" inputmode="numeric" value="${g('purchase')}" oninput="onDailyInput('${p.id}','purchase',this.value)"></td>
       <td><input type="number" inputmode="numeric" value="${g('return_qty')}" oninput="onDailyInput('${p.id}','return_qty',this.value)"></td>
       <td><input class="sold" type="number" inputmode="numeric" value="${g('sold')}" oninput="onDailyInput('${p.id}','sold',this.value)"></td>
-      <td><input type="number" inputmode="numeric" value="${g('staff_buy')}" oninput="onDailyInput('${p.id}','staff_buy',this.value)"></td>
-      <td><input type="number" inputmode="numeric" value="${g('treat')}" oninput="onDailyInput('${p.id}','treat',this.value)"></td>
+      <td><input type="number" inputmode="numeric" value="${g('staff_buy')}" oninput="onDailyInput('${p.id}','staff_buy',this.value)">${spHint}</td>
+      <td><input type="number" inputmode="numeric" value="${g('treat')}" oninput="onDailyInput('${p.id}','treat',this.value)">${tpHint}</td>
       <td>$${p.price}</td>
       <td class="sub" id="sub_${p.id}">$${sub}</td>
       <td class="cs" id="cs_${p.id}">${cs}</td>
@@ -511,7 +532,7 @@ function renderDaily(){
   }).join('');
   el.innerHTML = `<div class="tbl-scroll"><table class="daily-tbl">
     <thead><tr>
-      <th class="name">品名 / 代號</th><th>原庫存</th><th>進貨</th><th>退貨</th><th>銷售</th><th>員購</th><th>招待</th><th>單價</th><th>銷售小計</th><th>結算後</th>
+      <th class="name">品名 / 代號</th><th>原庫存</th><th>進貨</th><th>退貨</th><th>銷售<div class="phint">一般價</div></th><th>員購<div class="phint">員工價</div></th><th>招待<div class="phint">招待價</div></th><th>一般價</th><th>銷售小計</th><th>結算後</th>
     </tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
@@ -522,14 +543,17 @@ function onDailyInput(id, key, val){
   dailyInput[id][key]=val;
   const p = products.find(x=>x.id==id);
   // 即時更新該列小計與結算後庫存(不整頁重繪,避免游標跳走)
-  const sub = money(dval(id,'sold')*Number(p.price||0));
-  const subEl = document.getElementById('sub_'+id); if(subEl) subEl.textContent = '$'+sub;
+  const subEl = document.getElementById('sub_'+id); if(subEl) subEl.textContent = '$'+dailySubtotal(p);
   const csEl = document.getElementById('cs_'+id); if(csEl) csEl.textContent = closeStock(p);
   updateDailyTotal();
 }
 function updateDailyTotal(){
   let total=0, cnt=0;
-  activeTrackedProducts().forEach(p=>{ const s=dval(p.id,'sold'); if(s>0){ total+=s*Number(p.price||0); cnt++; } });
+  activeTrackedProducts().forEach(p=>{
+    const sub = dailySubtotal(p);
+    const anySale = dval(p.id,'sold')>0 || dval(p.id,'staff_buy')>0 || dval(p.id,'treat')>0;
+    if(anySale){ total+=sub; cnt++; }
+  });
   document.getElementById('dailyTotal').textContent = money(total);
   document.getElementById('dailyItemCount').textContent = cnt;
 }
@@ -547,7 +571,7 @@ async function submitDaily(){
     if(purchase||ret||sold||sb||tr){
       const cs = closeStock(p);
       rows.push({ date, dept:currentDept, product_code:p.code, product_name:p.name, open_stock:Number(p.stock||0),
-        purchase, return_qty:ret, sold, staff_buy:sb, treat:tr, price:Number(p.price||0), subtotal:money(sold*Number(p.price||0)), close_stock:cs, note:'' });
+        purchase, return_qty:ret, sold, staff_buy:sb, treat:tr, price:Number(p.price||0), subtotal:dailySubtotal(p), close_stock:cs, note:'' });
       updates.push({id:p.id, stock:cs});
     }
   });
