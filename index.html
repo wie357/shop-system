@@ -175,7 +175,11 @@
       <input class="search-box" id="stockSearch" placeholder="🔍 搜尋商品…" style="margin-top:8px;">
       <div id="stockList"><div class="loading">載入中…</div></div>
     </div>
-    <button class="btn block green" onclick="submitStocktake()" style="margin-bottom:8px;">✓ 完成盤點(儲存差異紀錄)</button>
+    <div class="card" style="padding:12px 14px;">
+      <label class="switch" style="font-size:14px;"><input type="checkbox" id="stkUpdateStock" checked> <b>完成後用實際盤點數量更新庫存</b></label>
+      <p class="muted" style="margin:6px 0 0; font-size:12px;">勾選:盤點後各商品庫存改為你輸入的實際數量(成為最新帳面)。<br>不勾:只記錄差異,不改庫存(僅供查帳)。</p>
+    </div>
+    <button class="btn block green" onclick="submitStocktake()" style="margin-bottom:8px;">✓ 完成盤點</button>
     <button class="btn block gray" onclick="resetStockInputs()">重設輸入</button>
   </div>
 </section>
@@ -507,14 +511,24 @@ async function submitStocktake(){
   });
   const warn = rows.filter(r=>r.status==='需主管確認').length;
   const diffCount = rows.filter(r=>r.diff!==0).length;
+  const updateStock = document.getElementById('stkUpdateStock').checked;
   let msg = `確定儲存【${currentDept}】盤點?\n盤點 ${rows.length} 項,差異 ${diffCount} 項`;
   if(warn) msg += `\n⚠️ 其中 ${warn} 項差異達10以上,需主管確認`;
+  msg += updateStock ? `\n\n✅ 將以實際數量更新 ${rows.length} 項商品庫存(成為最新帳面)。` : `\n\n（僅記錄差異,不更新庫存）`;
   if(!confirm(msg)) return;
   try{
     await sbInsert('stocktakes', rows);
+    if(updateStock){
+      for(const id of ids){
+        const p=products.find(x=>x.id==id); if(!p) continue;
+        const actual=Number(stockInput[id]); if(isNaN(actual)) continue;
+        await sbUpdate('products', id, {stock:actual, updated_at:new Date().toISOString()});
+      }
+      await loadProducts();
+    }
     stockInput={};
     renderStock();
-    toast(`盤點已儲存(${rows.length} 項)`);
+    toast(updateStock ? `盤點完成,已更新 ${rows.length} 項庫存` : `盤點已儲存(${rows.length} 項)`);
   }catch(e){ alert('儲存失敗:'+e.message); showNetBad(true); }
 }
 
