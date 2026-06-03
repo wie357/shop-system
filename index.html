@@ -72,6 +72,8 @@
   table.daily-tbl td.sub{font-weight:700; color:var(--blue); min-width:64px;}
   table.daily-tbl td.cs{font-weight:700; min-width:48px;}
   table.daily-tbl tr:nth-child(even) td:not(.name){background:#fcfdff;}
+  table.daily-tbl tr.grp-total td{background:#ecfdf5 !important; font-weight:800; color:#065f46; border-top:2px solid #5eead4; border-bottom:2px solid #5eead4;}
+  table.daily-tbl tr.grp-total td.name{background:#ecfdf5 !important;}
   .sold-hl{color:var(--blue);}
   /* 盤點 */
   .stk-item{display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--line);}
@@ -124,8 +126,22 @@
 </head>
 <body>
 
+<!-- ====== 登入 ====== -->
+<div class="deptpick" id="loginScreen" style="display:none;">
+  <div>
+    <h1>🔐 日結盤點系統</h1>
+    <p>請輸入帳號與密碼登入</p>
+  </div>
+  <div style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:12px;">
+    <input id="loginUser" placeholder="帳號" autocomplete="off" style="font-size:17px; padding:13px;">
+    <input id="loginPass" type="password" placeholder="密碼" autocomplete="off" style="font-size:17px; padding:13px;" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn block" style="background:#14b8a6; padding:14px; font-size:17px;" onclick="doLogin()">登入</button>
+    <div id="loginErr" style="color:#fecaca; text-align:center; font-size:14px; min-height:18px;"></div>
+  </div>
+</div>
+
 <!-- ====== 部門選擇 ====== -->
-<div class="deptpick" id="deptPick">
+<div class="deptpick" id="deptPick" style="display:none;">
   <div>
     <h1>🏪 日結盤點系統</h1>
     <p>請選擇今日要操作的部門</p>
@@ -139,7 +155,10 @@
     <h1 id="hdrTitle">日結表</h1>
     <div class="sub" id="hdrSub">—</div>
   </div>
-  <button class="deptchip" onclick="openDeptSwitch()"><span id="deptLabel">販賣部</span> ▾</button>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button class="deptchip" onclick="openDeptSwitch()"><span id="deptLabel">販賣部</span> ▾</button>
+    <button class="deptchip" style="background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); color:#cbd5e1;" onclick="openUserMenu()"><span id="userLabel">—</span> ⋯</button>
+  </div>
 </header>
 
 <div class="net-bad" id="netBad">⚠️ 無法連線雲端,請檢查網路。資料未儲存。</div>
@@ -225,8 +244,14 @@
 <!-- ====== 商品主檔 ====== -->
 <section id="page-products" class="page">
   <div class="wrap">
-    <button class="btn green block" onclick="openProductModal()" style="margin-bottom:8px;">➕ 新增商品</button>
-    <div class="card">
+    <div class="card mgr-only" style="background:#fffbeb; border-color:#fde68a; display:none;">
+      <div style="font-size:13px; color:#92400e;">🔑 你是<b>主管</b>,可修改單價、庫存、刪除商品與批次匯入。</div>
+    </div>
+    <div class="card" id="staffNotice" style="background:#f0f9ff; border-color:#bae6fd; display:none;">
+      <div style="font-size:13px; color:#075985;">ℹ️ 櫃台帳號可檢視商品,<b>修改單價 / 庫存 / 刪除 / 匯入需主管帳號</b>。</div>
+    </div>
+    <button class="btn green block mgr-only" onclick="openProductModal()" style="margin-bottom:8px; display:none;">➕ 新增商品</button>
+    <div class="card mgr-only" style="display:none;">
       <h2>📄 用 Excel 維護商品</h2>
       <p class="muted">在電腦下載商品清單 Excel,修改後上傳即可批次更新(以「部門+代號」對應,有則更新、無則新增)。</p>
       <div class="grid2" style="margin-top:8px;">
@@ -275,7 +300,7 @@
     </div>
     <div class="grid2">
       <button class="btn gray" onclick="closeModal('productModal')">取消</button>
-      <button class="btn green" onclick="saveProduct()">儲存</button>
+      <button class="btn green" id="pmSaveBtn" onclick="saveProduct()">儲存</button>
     </div>
     <button class="btn red block sm" id="pmDeleteBtn" style="margin-top:10px; display:none;" onclick="deleteProduct()">刪除此商品</button>
   </div>
@@ -288,6 +313,19 @@
     <button class="btn block teal" style="margin-bottom:10px;" onclick="chooseDept('販賣部'); closeModal('deptSwitchModal')">🥤 販賣部</button>
     <button class="btn block teal" style="margin-bottom:10px;" onclick="chooseDept('泳裝部'); closeModal('deptSwitchModal')">🏊 泳裝部</button>
     <button class="btn block gray" onclick="closeModal('deptSwitchModal')">取消</button>
+  </div>
+</div>
+
+<!-- ====== 使用者選單 Modal ====== -->
+<div class="modal-bg" id="userMenuModal">
+  <div class="modal">
+    <h3>使用者</h3>
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:15px;">目前登入:<b id="umName">—</b></div>
+      <div class="muted" id="umRole">—</div>
+    </div>
+    <button class="btn block red" onclick="doLogout()">登出</button>
+    <button class="btn block gray" style="margin-top:8px;" onclick="closeModal('userMenuModal')">取消</button>
   </div>
 </div>
 
@@ -335,6 +373,60 @@ function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1900); }
 function openModalEl(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ================= 登入 / 權限 ================= */
+const ACCOUNTS = {
+  '001':  { pass:'12345',    name:'櫃台', role:'staff' },
+  'A001': { pass:'23709556', name:'主管', role:'manager' }
+};
+let currentUser = null;  // {user, name, role}
+function isManager(){ return currentUser && currentUser.role==='manager'; }
+
+function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const acc = ACCOUNTS[u];
+  if(!acc || acc.pass!==p){
+    document.getElementById('loginErr').textContent = '帳號或密碼錯誤';
+    return;
+  }
+  currentUser = { user:u, name:acc.name, role:acc.role };
+  sessionStorage.setItem('fb_user', JSON.stringify(currentUser));
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginScreen').style.display='none';
+  applyAuthUI();
+  // 登入後決定下一步:有記憶部門就直接進,否則選部門
+  if(currentDept){
+    document.getElementById('deptPick').style.display='none';
+    document.getElementById('deptLabel').textContent = currentDept;
+    refreshAll();
+  }else{
+    document.getElementById('deptPick').style.display='flex';
+  }
+}
+function doLogout(){
+  closeModal('userMenuModal');
+  currentUser = null;
+  sessionStorage.removeItem('fb_user');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+function openUserMenu(){
+  document.getElementById('umName').textContent = currentUser ? `${currentUser.name}(${currentUser.user})` : '—';
+  document.getElementById('umRole').textContent = isManager() ? '主管 — 可修改所有資料' : '櫃台 — 日結 / 盤點 / 報表';
+  openModalEl('userMenuModal');
+}
+function applyAuthUI(){
+  // 顯示登入者
+  const ul = document.getElementById('userLabel'); if(ul && currentUser) ul.textContent = currentUser.name;
+  // 依權限切換「僅主管」元素的顯示
+  const mgr = isManager();
+  document.querySelectorAll('.mgr-only').forEach(el=>{ el.style.display = mgr ? '' : 'none'; });
+  document.querySelectorAll('.staff-only').forEach(el=>{ el.style.display = mgr ? 'none' : ''; });
+  const sn = document.getElementById('staffNotice'); if(sn) sn.style.display = mgr ? 'none' : '';
+}
 
 /* ================= 部門 ================= */
 async function chooseDept(dept){
@@ -481,19 +573,57 @@ function renderStock(){
   const el = document.getElementById('stockList');
   if(products.length===0){ el.innerHTML=`<div class="empty">此部門尚無商品</div>`; return; }
   if(list.length===0){ el.innerHTML=`<div class="empty">找不到商品</div>`; return; }
-  const body = list.map(p=>{
+  // 分組商品(泳衣/泳褲)要集中排在一起,才能在群組末尾插入「總數」列
+  const GROUPS = ['泳衣','泳褲'];
+  const grpOf = p => GROUPS.includes(p.category) ? p.category : '';
+  list = list.slice().sort((a,b)=>{
+    const ga=grpOf(a), gb=grpOf(b);
+    // 排序鍵:非分組=0(排前面);分組=1+組序(集中排後面,同組相鄰)
+    const ka = ga ? (1+GROUPS.indexOf(ga)) : 0;
+    const kb = gb ? (1+GROUPS.indexOf(gb)) : 0;
+    if(ka!==kb) return ka-kb;
+    return (Number(a.sort)||0)-(Number(b.sort)||0);
+  });
+  let body = '';
+  list.forEach((p,i)=>{
     const val = stockInput[p.id]!==undefined?stockInput[p.id]:'';
     const sys = Number(p.stock||0);
-    return `<tr>
+    body += `<tr>
       <td class="name">${esc(p.name)}<div class="code">${esc(p.code)}</div></td>
       <td>${sys}</td>
       <td><input type="number" inputmode="numeric" value="${val}" placeholder="實際" oninput="onStockInput('${p.id}',this.value)"></td>
       <td class="diff" id="diff_${p.id}">${diffCell(val, sys)}</td>
     </tr>`;
-  }).join('');
+    // 若此項屬於分組,且下一項不同組(或已是最後)→ 插入總數列
+    const grp = grpOf(p);
+    const next = list[i+1];
+    const nextGrp = next ? grpOf(next) : '';
+    if(grp && grp!==nextGrp){
+      body += `<tr class="grp-total" data-grp="${esc(grp)}">
+        <td class="name">📦 ${esc(grp)} 總數</td>
+        <td id="gtsys_${esc(grp)}">0</td>
+        <td id="gtact_${esc(grp)}">0</td>
+        <td id="gtdiff_${esc(grp)}"></td>
+      </tr>`;
+    }
+  });
   el.innerHTML = `<div class="tbl-scroll"><table class="daily-tbl">
     <thead><tr><th class="name">品名 / 代號</th><th>系統結算後</th><th>實際盤點</th><th>差異</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
+  updateGroupTotals();
+}
+function updateGroupTotals(){
+  const GROUPS = ['泳衣','泳褲'];
+  GROUPS.forEach(grp=>{
+    const items = products.filter(p=>p.category===grp && p.active!==false);
+    if(items.length===0) return;
+    let sys=0, act=0, hasInput=false;
+    items.forEach(p=>{ sys+=Number(p.stock||0); const v=stockInput[p.id]; if(v!==undefined&&v!==''){ act+=Number(v); hasInput=true; } });
+    const sysEl=document.getElementById('gtsys_'+grp); if(sysEl) sysEl.textContent=sys;
+    const actEl=document.getElementById('gtact_'+grp); if(actEl) actEl.textContent=hasInput?act:'—';
+    const diffEl=document.getElementById('gtdiff_'+grp);
+    if(diffEl) diffEl.innerHTML = hasInput ? diffCell(String(act), sys) : '';
+  });
 }
 function diffCell(val, sys){
   if(val===''||val===undefined) return '';
@@ -507,6 +637,7 @@ function onStockInput(id, val){
   if(val==='') delete stockInput[id]; else stockInput[id]=val;
   const p = products.find(x=>x.id==id); const sys=Number(p.stock||0);
   const el = document.getElementById('diff_'+id); if(el) el.innerHTML = diffCell(val, sys);
+  updateGroupTotals();
 }
 function resetStockInputs(){ stockInput={}; renderStock(); }
 async function submitStocktake(){
@@ -604,8 +735,12 @@ function renderProducts(){
     </div>`).join('');
 }
 function openProductModal(id){
+  // 櫃台只能檢視,不能新增/編輯
+  if(!isManager()){
+    if(!id){ toast('新增商品需主管帳號'); return; }
+  }
   document.getElementById('pmId').value = id||'';
-  document.getElementById('pmDeleteBtn').style.display = id?'block':'none';
+  document.getElementById('pmDeleteBtn').style.display = (id && isManager())?'block':'none';
   if(id){
     const p = products.find(x=>x.id==id);
     document.getElementById('pmTitle').textContent='編輯商品';
@@ -629,6 +764,14 @@ function openProductModal(id){
     document.getElementById('pmTrack').checked=true;
     document.getElementById('pmActive').checked=true;
   }
+  // 櫃台:欄位唯讀、隱藏儲存
+  const ro = !isManager();
+  ['pmCode','pmDept','pmName','pmPrice','pmCategory','pmMember','pmStaff','pmStock','pmNote','pmTrack','pmActive'].forEach(i=>{
+    const el=document.getElementById(i); if(!el) return;
+    if(el.tagName==='SELECT'||el.type==='checkbox') el.disabled=ro; else el.readOnly=ro;
+  });
+  document.getElementById('pmSaveBtn').style.display = ro?'none':'';
+  document.getElementById('pmTitle').textContent = ro ? '商品資料(檢視)' : document.getElementById('pmTitle').textContent;
   openModalEl('productModal');
 }
 function nextCode(){
@@ -638,6 +781,7 @@ function nextCode(){
   return prefix+String(max+1).padStart(2,'0');
 }
 async function saveProduct(){
+  if(!isManager()){ alert('此操作需要主管帳號'); return; }
   const id = document.getElementById('pmId').value;
   const code = document.getElementById('pmCode').value.trim();
   const dept = document.getElementById('pmDept').value;
@@ -669,6 +813,7 @@ async function saveProduct(){
   }
 }
 async function deleteProduct(){
+  if(!isManager()){ alert('此操作需要主管帳號'); return; }
   const id = document.getElementById('pmId').value;
   const p = products.find(x=>x.id==id);
   if(!confirm(`確定刪除「${p.name}」?(不影響已送出的日結 / 盤點紀錄)`)) return;
@@ -769,6 +914,7 @@ async function exportProductsExcel(){
   }catch(e){ alert('下載失敗:'+e.message); }
 }
 function importProductsExcel(ev){
+  if(!isManager()){ alert('此操作需要主管帳號'); ev.target.value=''; return; }
   const file = ev.target.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
@@ -833,12 +979,25 @@ document.getElementById('prodSearch').addEventListener('input', renderProducts);
 
 /* ================= 啟動 ================= */
 document.getElementById('dailyDate').value = todayStr();
-if(currentDept){
-  document.getElementById('deptPick').style.display='none';
-  document.getElementById('deptLabel').textContent = currentDept;
-  refreshAll();
+// 還原登入狀態(同一分頁 session)
+const savedUser = sessionStorage.getItem('fb_user');
+if(savedUser){
+  try{ currentUser = JSON.parse(savedUser); }catch(e){ currentUser=null; }
+}
+if(currentUser){
+  applyAuthUI();
+  document.getElementById('loginScreen').style.display='none';
+  if(currentDept){
+    document.getElementById('deptPick').style.display='none';
+    document.getElementById('deptLabel').textContent = currentDept;
+    refreshAll();
+  }else{
+    document.getElementById('deptPick').style.display='flex';
+  }
 }else{
-  document.getElementById('deptPick').style.display='flex';
+  // 未登入 → 顯示登入畫面
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('deptPick').style.display='none';
 }
 
 /* Service Worker */
