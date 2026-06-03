@@ -9,406 +9,334 @@
 <meta name="apple-mobile-web-app-title" content="販賣部系統">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>販賣部系統</title>
+<title>販賣部 / 泳裝部 日結盤點系統</title>
 <style>
   :root{
     --blue:#2563eb; --blue-d:#1d4ed8; --green:#16a34a; --green-d:#15803d;
     --red:#dc2626; --amber:#d97706; --gray:#64748b; --bg:#f1f5f9;
     --card:#ffffff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
+    --teal:#0f766e;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0;}
   body{
     font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
-    background:var(--bg); color:var(--text); font-size:16px;
-    padding-bottom:72px; /* for bottom nav */
+    background:var(--bg); color:var(--text); font-size:16px; padding-bottom:72px;
   }
   header{
-    background:var(--blue); color:#fff; padding:14px 16px;
+    background:var(--blue); color:#fff; padding:12px 14px;
     position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between;
     box-shadow:0 2px 8px rgba(0,0,0,.12);
   }
-  header h1{font-size:18px; margin:0; font-weight:700;}
+  header h1{font-size:17px; margin:0; font-weight:700;}
   header .sub{font-size:12px; opacity:.85;}
-  .wrap{padding:14px; max-width:720px; margin:0 auto;}
+  .deptchip{background:rgba(255,255,255,.2); border:none; color:#fff; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px;}
+  .wrap{padding:12px; max-width:860px; margin:0 auto;}
   .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
   .card h2{font-size:16px; margin:0 0 10px;}
   .row{display:flex; gap:8px; align-items:center;}
-  .row.wrap-row{flex-wrap:wrap;}
   label{font-size:13px; color:var(--muted); display:block; margin-bottom:4px;}
-  input,select{
-    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:10px;
-    font-size:16px; background:#fff; color:var(--text);
-  }
+  input,select{width:100%; padding:10px 11px; border:1px solid var(--line); border-radius:10px; font-size:16px; background:#fff; color:var(--text);}
   input:focus,select:focus{outline:2px solid var(--blue); border-color:var(--blue);}
-  .btn{
-    border:none; border-radius:10px; padding:11px 14px; font-size:15px; font-weight:600;
-    cursor:pointer; background:var(--blue); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:6px;
-  }
-  .btn:active{transform:scale(.97);}
-  .btn.green{background:var(--green);}
-  .btn.red{background:var(--red);}
-  .btn.gray{background:#e2e8f0; color:#334155;}
-  .btn.amber{background:var(--amber);}
-  .btn.block{width:100%;}
-  .btn.sm{padding:7px 10px; font-size:13px;}
+  .btn{border:none; border-radius:10px; padding:11px 14px; font-size:15px; font-weight:600; cursor:pointer; background:var(--blue); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:6px;}
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{opacity:.5;}
+  .btn.green{background:var(--green);} .btn.red{background:var(--red);} .btn.gray{background:#e2e8f0; color:#334155;}
+  .btn.amber{background:var(--amber);} .btn.teal{background:var(--teal);}
+  .btn.block{width:100%;} .btn.sm{padding:7px 10px; font-size:13px;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
-  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
-  .pill{font-size:12px; padding:3px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; display:inline-block;}
+  .pill{font-size:11px; padding:2px 7px; border-radius:999px; background:#eef2ff; color:#3730a3; display:inline-block;}
+  .pill.cat{background:#ecfeff; color:#155e75;}
   .muted{color:var(--muted); font-size:13px;}
-  .right{margin-left:auto;}
-  .center{text-align:center;}
+  .right{margin-left:auto;} .center{text-align:center;}
   .empty{text-align:center; color:var(--muted); padding:30px 10px;}
-  table{width:100%; border-collapse:collapse; font-size:14px;}
-  th,td{text-align:left; padding:8px 6px; border-bottom:1px solid var(--line);}
-  th{color:var(--muted); font-weight:600; font-size:12px;}
-  td.num,th.num{text-align:right;}
-  .prod-item{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .page{display:none;} .page.active{display:block;}
+  /* 底部導航 */
+  nav.tabbar{position:fixed; left:0; right:0; bottom:0; height:60px; background:#fff; border-top:1px solid var(--line); display:flex; z-index:60;}
+  nav.tabbar button{flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:var(--muted); font-size:11px; cursor:pointer;}
+  nav.tabbar button.active{color:var(--blue);}
+  nav.tabbar .ic{font-size:21px; line-height:1;}
+  /* 日結表格 */
+  .daily-item{border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px;}
+  .daily-item .top{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .daily-item .nm{font-weight:700; font-size:15px;}
+  .daily-item .code{font-size:11px; color:var(--muted);}
+  .daily-fields{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
+  .daily-fields .fld{display:flex; flex-direction:column;}
+  .daily-fields .fld label{font-size:11px; margin-bottom:2px; text-align:center; color:var(--muted);}
+  .daily-fields .fld input{padding:8px 4px; text-align:center; font-size:15px;}
+  .daily-item .calc{display:flex; justify-content:space-between; margin-top:8px; font-size:13px; padding-top:8px; border-top:1px dashed var(--line);}
+  .daily-item .calc b{font-size:15px;}
+  .sold-hl{color:var(--blue);}
+  /* 盤點 */
+  .stk-item{display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .stk-item:last-child{border-bottom:none;}
+  .stk-item .nm{flex:1; font-weight:600; font-size:14px;}
+  .stk-item .sys{width:54px; text-align:center; font-size:13px; color:var(--muted);}
+  .stk-item input{width:72px; text-align:center; padding:8px 4px;}
+  .stk-item .diff{width:74px; text-align:center; font-size:13px; font-weight:700;}
+  .diff-ok{color:var(--muted);} .diff-pos{color:var(--green);} .diff-neg{color:var(--red);}
+  .diff-warn{color:#b91c1c; background:#fee2e2; border-radius:6px; padding:2px 4px;}
+  /* 總計列 */
+  .total-bar{position:fixed; left:0; right:0; bottom:60px; background:#fff; border-top:1px solid var(--line); padding:9px 14px; display:flex; align-items:center; gap:10px; z-index:40; max-width:860px; margin:0 auto; box-shadow:0 -2px 10px rgba(0,0,0,.06);}
+  .total-bar .t{font-size:13px; color:var(--muted);} .total-bar .amt{font-size:22px; font-weight:800; color:var(--blue);}
+  /* 商品主檔 */
+  .prod-item{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); cursor:pointer;}
   .prod-item:last-child{border-bottom:none;}
   .prod-name{font-weight:600;}
   .prod-meta{font-size:12px; color:var(--muted);}
-  .qty-ctrl{display:flex; align-items:center; gap:8px;}
-  .qty-ctrl button{width:34px; height:34px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:20px; font-weight:700; cursor:pointer; line-height:1;}
-  .qty-ctrl .q{min-width:28px; text-align:center; font-weight:700;}
-  /* Sale catalog buttons */
-  .catalog{display:grid; grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:8px;}
-  .cat-btn{
-    background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center;
-    cursor:pointer; position:relative; min-height:74px; display:flex; flex-direction:column; justify-content:center; gap:3px;
-  }
-  .cat-btn:active{background:#eff6ff; border-color:var(--blue);}
-  .cat-btn .nm{font-weight:600; font-size:14px; line-height:1.2;}
-  .cat-btn .pr{color:var(--blue); font-weight:700; font-size:14px;}
-  .cat-btn .st{font-size:11px; color:var(--muted);}
-  .cat-btn.out{opacity:.45;}
-  .cat-btn .badge{position:absolute; top:-7px; right:-7px; background:var(--red); color:#fff; border-radius:999px; min-width:22px; height:22px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 5px;}
-  /* Cart */
-  .cart-line{display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--line);}
-  .cart-line .nm{flex:1; font-size:14px;}
-  .total-bar{
-    position:fixed; left:0; right:0; bottom:60px; background:#fff; border-top:1px solid var(--line);
-    padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:40; max-width:720px; margin:0 auto;
-    box-shadow:0 -2px 10px rgba(0,0,0,.06);
-  }
-  .total-bar .t{font-size:14px; color:var(--muted);}
-  .total-bar .amt{font-size:24px; font-weight:800; color:var(--blue);}
-  /* Bottom nav */
-  nav.tabbar{
-    position:fixed; left:0; right:0; bottom:0; height:60px; background:#fff; border-top:1px solid var(--line);
-    display:flex; z-index:60;
-  }
-  nav.tabbar button{
-    flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:2px; color:var(--muted); font-size:11px; cursor:pointer;
-  }
-  nav.tabbar button.active{color:var(--blue);}
-  nav.tabbar .ic{font-size:22px; line-height:1;}
-  .page{display:none;}
-  .page.active{display:block;}
-  /* Modal */
-  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; justify-content:center; z-index:100;}
-  .modal-bg.show{display:flex;}
-  .modal{background:#fff; width:100%; max-width:720px; border-radius:18px 18px 0 0; padding:18px 16px 24px; max-height:90vh; overflow:auto;}
-  .modal h3{margin:0 0 14px; font-size:17px;}
-  .modal .field{margin-bottom:12px;}
-  .toast{
-    position:fixed; left:50%; bottom:140px; transform:translateX(-50%); background:#0f172a; color:#fff;
-    padding:10px 18px; border-radius:999px; font-size:14px; z-index:200; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90%;
-  }
-  .toast.show{opacity:.95;}
-  .stat{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .stat .box{background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px;}
-  .stat .box .v{font-size:22px; font-weight:800;}
-  .stat .box .l{font-size:12px; color:var(--muted);}
-  .diff-pos{color:var(--green); font-weight:700;}
-  .diff-neg{color:var(--red); font-weight:700;}
-  .search-box{margin-bottom:10px;}
+  .badge-off{font-size:11px; background:#fee2e2; color:#b91c1c; padding:1px 6px; border-radius:999px;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{text-align:left; padding:7px 5px; border-bottom:1px solid var(--line);}
+  th{color:var(--muted); font-weight:600; font-size:11px;}
+  td.num,th.num{text-align:right;}
   .seg{display:flex; background:#e2e8f0; border-radius:10px; padding:3px; margin-bottom:12px;}
   .seg button{flex:1; border:none; background:none; padding:8px; border-radius:8px; font-size:14px; font-weight:600; color:#475569; cursor:pointer;}
   .seg button.active{background:#fff; color:var(--blue); box-shadow:0 1px 3px rgba(0,0,0,.1);}
-  .hist-item{padding:11px 0; border-bottom:1px solid var(--line); cursor:pointer;}
-  .hist-item:last-child{border-bottom:none;}
-  details summary{cursor:pointer; list-style:none;}
-  details summary::-webkit-details-marker{display:none;}
-  /* QR 掃描畫面 */
-  #scanModal .scan-screen{display:flex; flex-direction:column; width:100%; height:100%; background:#000;}
-  .scan-top{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; color:#fff; background:#111; font-weight:600;}
-  .scan-video-wrap{position:relative; flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#000; min-height:0;}
-  #scanVideo{width:100%; height:100%; object-fit:cover;}
-  .scan-frame{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:62vw; max-width:280px; aspect-ratio:1; border:3px solid #22c55e; border-radius:18px; box-shadow:0 0 0 9999px rgba(0,0,0,.35);}
-  .scan-hint{position:absolute; bottom:18px; left:0; right:0; text-align:center; color:#fff; font-size:14px; text-shadow:0 1px 3px #000;}
-  .scan-panel{background:#fff; padding:14px; max-height:46vh; overflow:auto;}
-  .scan-found{font-size:20px; font-weight:800; margin-bottom:2px;}
-  /* 列印 QR 標籤 */
-  @media print{
-    body *{visibility:hidden;}
-    #printArea, #printArea *{visibility:visible;}
-    #printArea{display:block !important; position:absolute; left:0; top:0; width:100%; padding:0 6px;}
-    .modal-bg{display:none !important;}
-    nav.tabbar, header, .total-bar{display:none !important;}
-    img{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
-  }
-  #printArea{display:none;}
-  .qr-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
-  .qr-cell{border:1px dashed #94a3b8; border-radius:8px; padding:8px; text-align:center; page-break-inside:avoid;}
-  .qr-cell .code{font-size:13px; font-weight:800; letter-spacing:1px; margin-top:3px;}
-  .qr-cell .nm{font-size:13px; font-weight:700; margin-top:2px; word-break:break-all;}
-  .qr-cell .pr{font-size:12px; color:#475569;}
+  .search-box{margin-bottom:10px;}
+  /* Modal */
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; justify-content:center; z-index:100;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff; width:100%; max-width:860px; border-radius:18px 18px 0 0; padding:18px 16px 24px; max-height:92vh; overflow:auto;}
+  .modal h3{margin:0 0 14px; font-size:17px;}
+  .field{margin-bottom:11px;}
+  .toast{position:fixed; left:50%; bottom:140px; transform:translateX(-50%); background:#0f172a; color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; z-index:200; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90%;}
+  .toast.show{opacity:.95;}
+  /* 部門選擇遮罩 */
+  .deptpick{position:fixed; inset:0; background:var(--blue); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; z-index:300; padding:24px;}
+  .deptpick h1{color:#fff; font-size:24px; margin:0 0 6px; text-align:center;}
+  .deptpick p{color:rgba(255,255,255,.85); margin:0 0 18px; text-align:center;}
+  .deptpick .opt{width:100%; max-width:340px; background:#fff; border:none; border-radius:16px; padding:22px; font-size:20px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.18);}
+  .deptpick .opt .d{font-size:13px; font-weight:500; color:var(--muted); margin-top:4px;}
+  .switch{display:inline-flex; align-items:center; gap:8px;}
+  .switch input{width:auto;}
+  .loading{text-align:center; color:var(--muted); padding:20px;}
+  .net-bad{background:#fef2f2; color:#b91c1c; padding:8px 12px; border-radius:8px; font-size:13px; margin-bottom:10px; display:none;}
+  .stk-head{display:flex; gap:8px; padding:6px 0; font-size:11px; color:var(--muted); border-bottom:2px solid var(--line);}
+  .stk-head .nm{flex:1;} .stk-head .sys{width:54px; text-align:center;} .stk-head .act{width:72px; text-align:center;} .stk-head .dif{width:74px; text-align:center;}
 </style>
 </head>
 <body>
 
+<!-- ====== 部門選擇 ====== -->
+<div class="deptpick" id="deptPick">
+  <div>
+    <h1>🏪 日結盤點系統</h1>
+    <p>請選擇今日要操作的部門</p>
+  </div>
+  <button class="opt" onclick="chooseDept('販賣部')">🥤 販賣部<div class="d">飲料・食品・餐點</div></button>
+  <button class="opt" onclick="chooseDept('泳裝部')">🏊 泳裝部<div class="d">泳具・泳裝・配件</div></button>
+</div>
+
 <header>
   <div>
-    <h1 id="hdrTitle">🛒 結算收銀</h1>
-    <div class="sub" id="hdrSub">販賣部結算與盤點系統</div>
+    <h1 id="hdrTitle">日結表</h1>
+    <div class="sub" id="hdrSub">—</div>
   </div>
-  <div id="hdrRight"></div>
+  <button class="deptchip" onclick="openDeptSwitch()"><span id="deptLabel">販賣部</span> ▾</button>
 </header>
 
-<!-- ============ 結算頁 ============ -->
-<section id="page-sale" class="page active">
-  <div class="wrap">
-    <input class="search-box" id="saleSearch" placeholder="🔍 搜尋商品名稱 / 條碼…">
-    <div id="catalog" class="catalog"></div>
-    <div style="height:8px"></div>
-    <div class="card" id="cartCard" style="display:none;">
-      <h2>本次結算</h2>
-      <div id="cartList"></div>
-    </div>
-  </div>
-  <div class="total-bar" id="totalBar" style="display:none;">
-    <div>
-      <div class="t">合計 (<span id="cartCount">0</span> 件)</div>
-      <div class="amt">$<span id="cartTotal">0</span></div>
-    </div>
-    <button class="btn gray sm right" onclick="clearCart()">清空</button>
-    <button class="btn green" onclick="checkout()">完成結算 ✓</button>
-  </div>
-</section>
+<div class="net-bad" id="netBad">⚠️ 無法連線雲端,請檢查網路。資料未儲存。</div>
 
-<!-- ============ 商品頁 ============ -->
-<section id="page-products" class="page">
+<!-- ====== 日結表 ====== -->
+<section id="page-daily" class="page active">
   <div class="wrap">
-    <div class="grid2" style="margin-bottom:12px;">
-      <button class="btn green" onclick="openProductModal()">➕ 新增商品</button>
-      <button class="btn" style="background:#0f766e;" onclick="printAllQR()">🖨 列印 QR 標籤</button>
-    </div>
-    <input class="search-box" id="prodSearch" placeholder="🔍 搜尋商品…">
     <div class="card">
-      <div id="productList"></div>
+      <div class="row" style="margin-bottom:8px;">
+        <div><label style="margin:0;">日結日期</label><input type="date" id="dailyDate" style="width:auto;" onchange="onDailyDateChange()"></div>
+        <button class="btn gray sm right" onclick="loadDaily()">🔄 重新整理</button>
+      </div>
+      <p class="muted" style="margin:6px 0 0;">對照手寫報表,逐項輸入今日的進貨 / 退貨 / 銷售 / 員購 / 招待數量。系統自動算小計與結算後庫存。</p>
     </div>
+    <input class="search-box" id="dailySearch" placeholder="🔍 搜尋商品名稱 / 代號…">
+    <div id="dailyList"><div class="loading">載入中…</div></div>
+  </div>
+  <div class="total-bar">
+    <div>
+      <div class="t">今日銷售總額(<span id="dailyItemCount">0</span> 項有銷售)</div>
+      <div class="amt">$<span id="dailyTotal">0</span></div>
+    </div>
+    <button class="btn green right" onclick="submitDaily()">送出日結 ✓</button>
   </div>
 </section>
 
-<!-- ============ 盤點頁 ============ -->
+<!-- ====== 盤點 ====== -->
 <section id="page-stock" class="page">
   <div class="wrap">
-    <button class="btn block" style="margin-bottom:12px; background:#0f766e;" onclick="openScanner()">📷 掃描 QR 碼盤點</button>
     <div class="card">
       <h2>📋 庫存盤點</h2>
-      <p class="muted">掃 QR 碼或在下方手動輸入實際清點到的數量,系統會自動算出與帳面庫存的差異。</p>
-      <input class="search-box" id="stockSearch" placeholder="🔍 搜尋商品…">
-      <div id="stockList"></div>
+      <p class="muted">依「系統結算後庫存」人工核對。輸入實際盤點數量,系統自動算差異。差異達 10 以上會提示主管確認。</p>
+      <input class="search-box" id="stockSearch" placeholder="🔍 搜尋商品…" style="margin-top:8px;">
+      <div class="stk-head"><span class="nm">商品</span><span class="sys">系統</span><span class="act">實際</span><span class="dif">差異</span></div>
+      <div id="stockList"><div class="loading">載入中…</div></div>
     </div>
-    <button class="btn block green" onclick="submitStocktake()" style="margin-bottom:8px;">✓ 完成盤點並更新庫存</button>
+    <button class="btn block green" onclick="submitStocktake()" style="margin-bottom:8px;">✓ 完成盤點(儲存差異紀錄)</button>
     <button class="btn block gray" onclick="resetStockInputs()">重設輸入</button>
   </div>
 </section>
 
-<!-- ============ 報表頁 ============ -->
+<!-- ====== 報表 ====== -->
 <section id="page-report" class="page">
   <div class="wrap">
     <div class="seg">
-      <button id="segSales" class="active" onclick="switchReport('sales')">銷售紀錄</button>
-      <button id="segStock" onclick="switchReport('stock')">盤點紀錄</button>
+      <button id="segSales" class="active" onclick="switchReport('sales')">每日銷售總表</button>
+      <button id="segStock" onclick="switchReport('stock')">盤點差異表</button>
     </div>
-
     <div id="report-sales">
       <div class="card">
-        <h2>📊 今日營業</h2>
-        <div class="stat">
-          <div class="box"><div class="v" id="todayRevenue">$0</div><div class="l">今日營業額</div></div>
-          <div class="box"><div class="v" id="todayCount">0</div><div class="l">今日交易筆數</div></div>
-          <div class="box"><div class="v" id="todayItems">0</div><div class="l">今日售出件數</div></div>
-          <div class="box"><div class="v" id="todayProfit">$0</div><div class="l">今日預估毛利</div></div>
-        </div>
-      </div>
-      <div class="card">
         <div class="row" style="margin-bottom:8px;">
-          <h2 style="margin:0;">交易明細</h2>
-          <button class="btn sm gray right" onclick="exportSalesCSV()">⬇ 匯出 CSV</button>
+          <h2 style="margin:0;">每日銷售總表</h2>
+          <button class="btn sm gray right" onclick="exportExcel()">⬇ Excel</button>
         </div>
-        <div id="salesHistory"></div>
+        <div id="salesReport"><div class="loading">載入中…</div></div>
       </div>
     </div>
-
     <div id="report-stock" style="display:none;">
       <div class="card">
         <div class="row" style="margin-bottom:8px;">
-          <h2 style="margin:0;">盤點歷史</h2>
-          <button class="btn sm gray right" onclick="exportStockCSV()">⬇ 匯出 CSV</button>
+          <h2 style="margin:0;">盤點差異表</h2>
+          <button class="btn sm gray right" onclick="exportStockExcel()">⬇ Excel</button>
         </div>
-        <div id="stockHistory"></div>
+        <div id="stockReport"><div class="loading">載入中…</div></div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>📑 Excel 報表</h2>
-      <p class="muted">一次匯出含「商品清單 / 盤點表 / 營業報表」三個分頁的 Excel,盤點表與營業報表內建公式,自動算差異與加總。</p>
-      <button class="btn block" style="background:#15803d;" onclick="exportExcel()">⬇ 匯出 Excel(.xlsx)</button>
-    </div>
-
-    <div class="card">
-      <h2>☁️ 雲端同步</h2>
-      <p class="muted">用「店家代碼 + 密碼」把資料存到雲端;在另一台裝置輸入相同代碼與密碼即可下載。手機上傳、電腦下載皆可。</p>
-      <div class="field" style="margin-bottom:8px;"><label>店家代碼(自訂,例:fanbu2026)</label><input id="cloudCode" placeholder="輸入你的店家代碼"></div>
-      <div class="field" style="margin-bottom:10px;"><label>密碼 / PIN(保護你的資料)</label><input id="cloudPin" type="password" placeholder="輸入密碼"></div>
-      <div class="grid2">
-        <button class="btn green" onclick="cloudUpload()">☁️⬆ 上傳雲端</button>
-        <button class="btn" onclick="cloudDownload()">☁️⬇ 下載雲端</button>
-      </div>
-      <p class="muted center" style="margin-top:8px; font-size:12px;">⚠️ 下載會以雲端資料覆蓋本機;上傳會以本機資料覆蓋雲端。請記住代碼與密碼,忘記無法救回。</p>
-    </div>
-
-    <div class="card">
-      <h2>⚙️ 資料管理</h2>
-      <div class="grid2">
-        <button class="btn gray sm" onclick="backupData()">💾 備份資料</button>
-        <button class="btn gray sm" onclick="document.getElementById('restoreFile').click()">📂 還原備份</button>
-      </div>
-      <input type="file" id="restoreFile" accept="application/json" style="display:none" onchange="restoreData(event)">
-      <div style="height:8px"></div>
-      <button class="btn red sm block" onclick="resetAll()">⚠️ 清除全部資料</button>
-      <p class="muted center" style="margin-top:10px;">資料儲存在本機瀏覽器,建議定期備份。</p>
     </div>
   </div>
 </section>
 
-<!-- ============ 底部導航 ============ -->
+<!-- ====== 商品主檔 ====== -->
+<section id="page-products" class="page">
+  <div class="wrap">
+    <button class="btn green block" onclick="openProductModal()" style="margin-bottom:12px;">➕ 新增商品</button>
+    <input class="search-box" id="prodSearch" placeholder="🔍 搜尋商品…">
+    <div class="card"><div id="productList"><div class="loading">載入中…</div></div></div>
+  </div>
+</section>
+
+<!-- ====== 底部導航 ====== -->
 <nav class="tabbar">
-  <button id="tab-sale" class="active" onclick="switchTab('sale')"><span class="ic">🛒</span>結算</button>
-  <button id="tab-products" onclick="switchTab('products')"><span class="ic">📦</span>商品</button>
+  <button id="tab-daily" class="active" onclick="switchTab('daily')"><span class="ic">📝</span>日結</button>
   <button id="tab-stock" onclick="switchTab('stock')"><span class="ic">📋</span>盤點</button>
   <button id="tab-report" onclick="switchTab('report')"><span class="ic">📊</span>報表</button>
+  <button id="tab-products" onclick="switchTab('products')"><span class="ic">📦</span>商品</button>
 </nav>
 
-<!-- ============ 商品編輯 Modal ============ -->
+<!-- ====== 商品編輯 Modal ====== -->
 <div class="modal-bg" id="productModal">
   <div class="modal">
     <h3 id="pmTitle">新增商品</h3>
     <input type="hidden" id="pmId">
-    <div class="field"><label>商品名稱 *</label><input id="pmName" placeholder="例:可樂"></div>
-    <div class="field"><label>商品代碼(固定不變,改名稱 / 價格都不用重印 QR)</label><input id="pmCode" placeholder="例:P001"></div>
-    <div class="field grid2" style="display:grid;">
-      <div><label>售價 *</label><input id="pmPrice" type="number" inputmode="decimal" placeholder="0"></div>
-      <div><label>成本(選填)</label><input id="pmCost" type="number" inputmode="decimal" placeholder="0"></div>
+    <div class="grid2">
+      <div class="field"><label>商品代號 *</label><input id="pmCode" placeholder="如 A01 / B01"></div>
+      <div class="field"><label>部門 *</label><select id="pmDept"><option>販賣部</option><option>泳裝部</option></select></div>
     </div>
-    <div class="field grid2" style="display:grid;">
-      <div><label>目前庫存</label><input id="pmStock" type="number" inputmode="numeric" placeholder="0"></div>
-      <div><label>分類(選填)</label><input id="pmCategory" placeholder="例:飲料"></div>
+    <div class="field"><label>商品名稱 *</label><input id="pmName" placeholder="例:寶礦力"></div>
+    <div class="grid2">
+      <div class="field"><label>單價 *</label><input id="pmPrice" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label>分類</label><input id="pmCategory" placeholder="飲料 / 食品 / 泳具…"></div>
     </div>
-    <div class="field">
-      <label>條碼(選填)</label>
-      <input id="pmBarcode" inputmode="numeric" placeholder="掃描或手動輸入">
+    <div class="grid2">
+      <div class="field"><label>會員價(選填)</label><input id="pmMember" type="number" inputmode="decimal" placeholder="—"></div>
+      <div class="field"><label>員工價(選填)</label><input id="pmStaff" type="number" inputmode="decimal" placeholder="—"></div>
     </div>
-    <div class="grid2" style="margin-top:6px;">
+    <div class="field"><label>目前庫存</label><input id="pmStock" type="number" inputmode="numeric" placeholder="0"></div>
+    <div class="field"><label>備註</label><input id="pmNote" placeholder="選填"></div>
+    <div class="grid2" style="margin-bottom:10px;">
+      <label class="switch"><input type="checkbox" id="pmTrack" checked> 計入庫存</label>
+      <label class="switch"><input type="checkbox" id="pmActive" checked> 啟用中</label>
+    </div>
+    <div class="grid2">
       <button class="btn gray" onclick="closeModal('productModal')">取消</button>
       <button class="btn green" onclick="saveProduct()">儲存</button>
     </div>
-    <button class="btn block sm" id="pmQrBtn" style="margin-top:10px; display:none; background:#0f766e;" onclick="showProductQR()">📱 顯示此商品 QR 碼</button>
     <button class="btn red block sm" id="pmDeleteBtn" style="margin-top:10px; display:none;" onclick="deleteProduct()">刪除此商品</button>
+  </div>
+</div>
+
+<!-- ====== 部門切換 Modal ====== -->
+<div class="modal-bg" id="deptSwitchModal">
+  <div class="modal">
+    <h3>切換部門</h3>
+    <button class="btn block teal" style="margin-bottom:10px;" onclick="chooseDept('販賣部'); closeModal('deptSwitchModal')">🥤 販賣部</button>
+    <button class="btn block teal" style="margin-bottom:10px;" onclick="chooseDept('泳裝部'); closeModal('deptSwitchModal')">🏊 泳裝部</button>
+    <button class="btn block gray" onclick="closeModal('deptSwitchModal')">取消</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- 列印 QR 標籤用區塊 -->
-<div id="printArea"></div>
-
-<!-- ============ QR 掃描 Modal ============ -->
-<div class="modal-bg" id="scanModal" style="align-items:stretch;">
-  <div class="scan-screen">
-    <div class="scan-top">
-      <span id="scanTitle">📷 掃描 QR 盤點</span>
-      <button class="btn gray sm" onclick="closeScanner()">關閉 ✕</button>
-    </div>
-    <div class="scan-video-wrap">
-      <video id="scanVideo" playsinline muted></video>
-      <div class="scan-frame"></div>
-      <div class="scan-hint" id="scanHint">將商品的 QR 碼對準框內</div>
-    </div>
-    <div class="scan-panel" id="scanPanel">
-      <div id="scanResult"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ============ QR 顯示 Modal ============ -->
-<div class="modal-bg" id="qrModal">
-  <div class="modal" style="text-align:center;">
-    <h3 id="qrTitle">商品 QR 碼</h3>
-    <div id="qrBox" style="display:flex; justify-content:center; padding:8px 0;"></div>
-    <p class="muted" id="qrSub" style="margin:6px 0 14px;"></p>
-    <div class="grid2">
-      <button class="btn gray" onclick="closeModal('qrModal')">關閉</button>
-      <button class="btn" onclick="printSingleQR()">🖨 列印</button>
-    </div>
-  </div>
-</div>
-
-<script src="jsQR.js"></script>
-<script src="qrcode.js"></script>
 <script src="xlsx.full.min.js"></script>
 <script>
-/* ================= 資料層 ================= */
-const DB = {
-  get(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def; }catch(e){ return def; } },
-  set(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
-};
-let products = DB.get('fb_products', []);
-let sales    = DB.get('fb_sales', []);
-let stocktakes = DB.get('fb_stocktakes', []);
-let cart = {}; // {productId: qty}
+/* ================= Supabase 連線 ================= */
+const SUPABASE_URL = 'https://uofrbuofyfcatgbjxjde.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZnJidW9meWZjYXRnYmp4amRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE3NzMsImV4cCI6MjA5NTcyNzc3M30.ZKu0i73mpEmem9R3m3p_TXvBMab3XG5G8CSJBiyAsXA';
+const SB_HEADERS = { 'apikey':SUPABASE_ANON, 'Authorization':'Bearer '+SUPABASE_ANON, 'Content-Type':'application/json' };
 
-function saveProducts(){ DB.set('fb_products', products); }
-function saveSales(){ DB.set('fb_sales', sales); }
-function saveStocktakes(){ DB.set('fb_stocktakes', stocktakes); }
+function showNetBad(b){ document.getElementById('netBad').style.display = b?'block':'none'; }
 
-let _uidSeq = DB.get('fb_uidseq', 0);
-function uid(){ _uidSeq++; DB.set('fb_uidseq', _uidSeq); return Date.now().toString(36) + '-' + _uidSeq.toString(36); }
-// 產生下一個固定商品代碼,如 P001、P002…(取現有最大號 +1)
-function nextProductCode(){
-  let max=0;
-  products.forEach(p=>{ const m=/^P(\d+)$/i.exec((p.code||'').trim()); if(m){ const n=parseInt(m[1]); if(n>max) max=n; } });
-  return 'P'+String(max+1).padStart(3,'0');
+async function sbSelect(table, query=''){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers: SB_HEADERS });
+  if(!res.ok) throw new Error('讀取失敗 '+res.status);
+  return res.json();
 }
-function nowISO(){ return new Date().toISOString(); }
-function fmtDate(iso){
-  const d = new Date(iso);
-  const p = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+async function sbInsert(table, rows){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method:'POST', headers:{...SB_HEADERS, 'Prefer':'return=representation'}, body: JSON.stringify(rows) });
+  if(!res.ok) throw new Error('新增失敗 '+res.status+' '+await res.text());
+  return res.json();
 }
-function isSameDay(iso, ref){
-  const a=new Date(iso), b=ref;
-  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+async function sbUpdate(table, id, patch){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers:{...SB_HEADERS, 'Prefer':'return=representation'}, body: JSON.stringify(patch) });
+  if(!res.ok) throw new Error('更新失敗 '+res.status);
+  return res.json();
 }
+async function sbDelete(table, id){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: SB_HEADERS });
+  if(!res.ok) throw new Error('刪除失敗 '+res.status);
+}
+function enc(v){ return encodeURIComponent(v); }
+
+/* ================= 狀態 ================= */
+let currentDept = localStorage.getItem('fb_dept') || '';
+let products = [];          // 目前部門的商品
+let dailyInput = {};        // {productId: {purchase,return_qty,sold,staff_buy,treat}}
+let stockInput = {};        // {productId: actualQty}
+
+function todayStr(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
 function money(n){ return Math.round(n*100)/100; }
-
-/* ================= 共用 UI ================= */
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800);
-}
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1900); }
 function openModalEl(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 
+/* ================= 部門 ================= */
+async function chooseDept(dept){
+  currentDept = dept;
+  localStorage.setItem('fb_dept', dept);
+  document.getElementById('deptPick').style.display='none';
+  document.getElementById('deptLabel').textContent = dept;
+  dailyInput={}; stockInput={};
+  await refreshAll();
+}
+function openDeptSwitch(){ openModalEl('deptSwitchModal'); }
+
+async function refreshAll(){
+  await loadProducts();
+  switchTab('daily');
+}
+
+/* ================= 載入商品 ================= */
+async function loadProducts(){
+  try{
+    showNetBad(false);
+    products = await sbSelect('products', `dept=eq.${enc(currentDept)}&order=sort`);
+  }catch(e){ showNetBad(true); products=[]; }
+}
+
+/* ================= 分頁切換 ================= */
 const TAB_TITLES = {
-  sale:['🛒 結算收銀','點選商品加入結算'],
-  products:['📦 商品管理','管理販賣部商品'],
-  stock:['📋 庫存盤點','清點實際庫存'],
-  report:['📊 報表與紀錄','營業與盤點分析']
+  daily:['📝 日結表','輸入今日銷售與異動'],
+  stock:['📋 庫存盤點','核對實際庫存'],
+  report:['📊 報表','銷售與盤點分析'],
+  products:['📦 商品主檔','管理商品資料']
 };
 function switchTab(tab){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -416,229 +344,159 @@ function switchTab(tab){
   document.getElementById('page-'+tab).classList.add('active');
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('hdrTitle').textContent = TAB_TITLES[tab][0];
-  document.getElementById('hdrSub').textContent = TAB_TITLES[tab][1];
+  document.getElementById('hdrSub').textContent = currentDept + ' ・ ' + TAB_TITLES[tab][1];
+  document.querySelector('.total-bar').style.display = (tab==='daily')?'flex':'none';
   window.scrollTo(0,0);
-  if(tab==='products') renderProducts();
-  if(tab==='stock') renderStockList();
+  if(tab==='daily') renderDaily();
+  if(tab==='stock') renderStock();
   if(tab==='report') renderReport();
-  if(tab==='sale') renderCatalog();
+  if(tab==='products') renderProducts();
 }
 
-/* ================= 結算 ================= */
-function renderCatalog(){
-  const q = document.getElementById('saleSearch').value.trim().toLowerCase();
-  const el = document.getElementById('catalog');
-  let list = products.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
-  if(q) list = list.filter(p => p.name.toLowerCase().includes(q) || (p.barcode||'').includes(q));
-  if(products.length===0){
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1;">尚無商品<br><br><button class="btn green" onclick="switchTab('products')">先去新增商品</button></div>`;
-    updateTotalBar(); return;
-  }
-  if(list.length===0){ el.innerHTML = `<div class="empty" style="grid-column:1/-1;">找不到符合的商品</div>`; updateTotalBar(); return; }
+/* ================= 日結表 ================= */
+function activeTrackedProducts(){ return products.filter(p=>p.active!==false); }
+function dval(id, key){ return (dailyInput[id] && dailyInput[id][key]!==undefined && dailyInput[id][key]!=='') ? Number(dailyInput[id][key]) : 0; }
+function closeStock(p){ // 結算後庫存
+  return Number(p.stock||0) + dval(p.id,'purchase') - dval(p.id,'return_qty') - dval(p.id,'sold') - dval(p.id,'staff_buy') - dval(p.id,'treat');
+}
+function renderDaily(){
+  document.getElementById('dailyDate').value = document.getElementById('dailyDate').value || todayStr();
+  const q = (document.getElementById('dailySearch').value||'').trim().toLowerCase();
+  let list = activeTrackedProducts();
+  if(q) list = list.filter(p=>p.name.toLowerCase().includes(q)||p.code.toLowerCase().includes(q));
+  const el = document.getElementById('dailyList');
+  if(products.length===0){ el.innerHTML = `<div class="empty">此部門尚無商品<br><br><button class="btn green" onclick="switchTab('products')">去新增商品</button></div>`; updateDailyTotal(); return; }
+  if(list.length===0){ el.innerHTML = `<div class="empty">找不到符合的商品</div>`; updateDailyTotal(); return; }
   el.innerHTML = list.map(p=>{
-    const inCart = cart[p.id]||0;
-    const out = p.stock<=0;
-    return `<div class="cat-btn ${out?'out':''}" onclick="addToCart('${p.id}')">
-      ${inCart?`<span class="badge">${inCart}</span>`:''}
-      <div class="nm">${esc(p.name)}</div>
-      <div class="pr">$${p.price}</div>
-      <div class="st">庫存 ${p.stock}</div>
-    </div>`;
-  }).join('');
-  updateTotalBar();
-}
-function addToCart(id){
-  const p = products.find(x=>x.id===id); if(!p) return;
-  const cur = cart[id]||0;
-  if(cur+1 > p.stock){ toast(`「${p.name}」庫存不足(剩 ${p.stock})`); return; }
-  cart[id] = cur+1;
-  renderCatalog(); renderCart();
-}
-function setCartQty(id, qty){
-  const p = products.find(x=>x.id===id); if(!p) return;
-  qty = Math.max(0, qty);
-  if(qty > p.stock){ toast(`庫存只剩 ${p.stock}`); qty = p.stock; }
-  if(qty===0) delete cart[id]; else cart[id]=qty;
-  renderCatalog(); renderCart();
-}
-function renderCart(){
-  const ids = Object.keys(cart);
-  const card = document.getElementById('cartCard');
-  const list = document.getElementById('cartList');
-  if(ids.length===0){ card.style.display='none'; updateTotalBar(); return; }
-  card.style.display='block';
-  list.innerHTML = ids.map(id=>{
-    const p = products.find(x=>x.id===id); if(!p) return '';
-    const qty = cart[id];
-    return `<div class="cart-line">
-      <div class="nm">${esc(p.name)}<div class="muted">$${p.price} × ${qty} = $${money(p.price*qty)}</div></div>
-      <div class="qty-ctrl">
-        <button onclick="setCartQty('${id}',${qty-1})">−</button>
-        <span class="q">${qty}</span>
-        <button onclick="setCartQty('${id}',${qty+1})">＋</button>
+    const inp = dailyInput[p.id]||{};
+    const g = k => inp[k]!==undefined?inp[k]:'';
+    const sub = money(dval(p.id,'sold')*Number(p.price||0));
+    const cs = closeStock(p);
+    return `<div class="daily-item">
+      <div class="top"><span class="nm">${esc(p.name)}</span><span class="code">${esc(p.code)}</span><span class="right muted">單價 $${p.price}　原庫存 ${p.stock||0}</span></div>
+      <div class="daily-fields">
+        <div class="fld"><label>進貨</label><input type="number" inputmode="numeric" value="${g('purchase')}" oninput="onDailyInput('${p.id}','purchase',this.value)"></div>
+        <div class="fld"><label>退貨</label><input type="number" inputmode="numeric" value="${g('return_qty')}" oninput="onDailyInput('${p.id}','return_qty',this.value)"></div>
+        <div class="fld"><label>銷售</label><input type="number" inputmode="numeric" value="${g('sold')}" oninput="onDailyInput('${p.id}','sold',this.value)" style="border-color:#bfdbfe;background:#eff6ff;"></div>
+        <div class="fld"><label>員購</label><input type="number" inputmode="numeric" value="${g('staff_buy')}" oninput="onDailyInput('${p.id}','staff_buy',this.value)"></div>
+        <div class="fld"><label>招待</label><input type="number" inputmode="numeric" value="${g('treat')}" oninput="onDailyInput('${p.id}','treat',this.value)"></div>
       </div>
+      <div class="calc"><span>銷售小計 <b class="sold-hl" id="sub_${p.id}">$${sub}</b></span><span>結算後庫存 <b id="cs_${p.id}">${cs}</b></span></div>
     </div>`;
   }).join('');
-  updateTotalBar();
+  updateDailyTotal();
 }
-function updateTotalBar(){
-  const ids = Object.keys(cart);
-  let total=0, count=0;
-  ids.forEach(id=>{ const p=products.find(x=>x.id===id); if(p){ total+=p.price*cart[id]; count+=cart[id]; }});
-  document.getElementById('cartTotal').textContent = money(total);
-  document.getElementById('cartCount').textContent = count;
-  document.getElementById('totalBar').style.display = ids.length? 'flex':'none';
+function onDailyInput(id, key, val){
+  if(!dailyInput[id]) dailyInput[id]={};
+  dailyInput[id][key]=val;
+  const p = products.find(x=>x.id==id);
+  // 即時更新該列小計與結算後庫存(不整頁重繪,避免游標跳走)
+  const sub = money(dval(id,'sold')*Number(p.price||0));
+  const subEl = document.getElementById('sub_'+id); if(subEl) subEl.textContent = '$'+sub;
+  const csEl = document.getElementById('cs_'+id); if(csEl) csEl.textContent = closeStock(p);
+  updateDailyTotal();
 }
-function clearCart(){ if(Object.keys(cart).length===0) return; if(confirm('確定清空本次結算?')){ cart={}; renderCatalog(); renderCart(); } }
-function checkout(){
-  const ids = Object.keys(cart);
-  if(ids.length===0) return;
-  const items=[]; let total=0;
-  for(const id of ids){
-    const p = products.find(x=>x.id===id); if(!p) continue;
-    const qty = cart[id];
-    items.push({productId:id, name:p.name, price:p.price, cost:p.cost||0, qty});
-    total += p.price*qty;
-    p.stock -= qty; // 扣庫存
-  }
-  const sale = {id:uid(), datetime:nowISO(), items, total:money(total)};
-  sales.push(sale); saveSales(); saveProducts();
-  cart={}; renderCatalog(); renderCart();
-  toast(`結算完成 $${sale.total}`);
+function updateDailyTotal(){
+  let total=0, cnt=0;
+  activeTrackedProducts().forEach(p=>{ const s=dval(p.id,'sold'); if(s>0){ total+=s*Number(p.price||0); cnt++; } });
+  document.getElementById('dailyTotal').textContent = money(total);
+  document.getElementById('dailyItemCount').textContent = cnt;
 }
+function onDailyDateChange(){ /* 預留:可載入該日已存日結。第一版以當日輸入為主 */ }
+function loadDaily(){ dailyInput={}; renderDaily(); toast('已重設輸入'); }
 
-/* ================= 商品管理 ================= */
-function renderProducts(){
-  const q = document.getElementById('prodSearch').value.trim().toLowerCase();
-  const el = document.getElementById('productList');
-  let list = products.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
-  if(q) list = list.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q)||(p.category||'').toLowerCase().includes(q));
-  if(list.length===0){ el.innerHTML = `<div class="empty">${products.length? '找不到商品':'尚無商品,點上方「新增商品」開始'}</div>`; return; }
-  el.innerHTML = list.map(p=>`
-    <div class="prod-item" onclick="openProductModal('${p.id}')">
-      <div style="flex:1;">
-        <div class="prod-name">${esc(p.name)} ${p.code?`<span class="pill">${esc(p.code)}</span>`:''} ${p.category?`<span class="pill" style="background:#ecfeff;color:#155e75;">${esc(p.category)}</span>`:''}</div>
-        <div class="prod-meta">售價 $${p.price}${p.cost?` ・成本 $${p.cost}`:''}${p.barcode?` ・條碼 ${esc(p.barcode)}`:''}</div>
-      </div>
-      <div class="center">
-        <div style="font-weight:700; ${p.stock<=0?'color:var(--red)':p.stock<=5?'color:var(--amber)':''}">${p.stock}</div>
-        <div class="muted" style="font-size:11px;">庫存</div>
-      </div>
-    </div>`).join('');
-}
-function openProductModal(id){
-  document.getElementById('pmId').value = id||'';
-  const del = document.getElementById('pmDeleteBtn');
-  document.getElementById('pmQrBtn').style.display = id? 'block':'none';
-  if(id){
-    const p = products.find(x=>x.id===id);
-    document.getElementById('pmTitle').textContent='編輯商品';
-    document.getElementById('pmName').value=p.name;
-    document.getElementById('pmCode').value=p.code||'';
-    document.getElementById('pmPrice').value=p.price;
-    document.getElementById('pmCost').value=p.cost||'';
-    document.getElementById('pmStock').value=p.stock;
-    document.getElementById('pmCategory').value=p.category||'';
-    document.getElementById('pmBarcode').value=p.barcode||'';
-    del.style.display='block';
-  }else{
-    document.getElementById('pmTitle').textContent='新增商品';
-    ['pmName','pmPrice','pmCost','pmStock','pmCategory','pmBarcode'].forEach(i=>document.getElementById(i).value='');
-    document.getElementById('pmCode').value = nextProductCode(); // 自動帶入下一個代碼
-    del.style.display='none';
-  }
-  openModalEl('productModal');
-}
-function saveProduct(){
-  const id = document.getElementById('pmId').value;
-  const name = document.getElementById('pmName').value.trim();
-  const price = parseFloat(document.getElementById('pmPrice').value);
-  if(!name){ toast('請輸入商品名稱'); return; }
-  if(isNaN(price)||price<0){ toast('請輸入有效售價'); return; }
-  let code = document.getElementById('pmCode').value.trim();
-  if(!code) code = nextProductCode();
-  // 代碼不可與其他商品重複
-  if(products.some(p=>p.id!==id && (p.code||'').trim()===code)){ toast('商品代碼重複,請改用其他代碼'); return; }
-  const data = {
-    name, code, price:money(price),
-    cost: money(parseFloat(document.getElementById('pmCost').value)||0),
-    stock: parseInt(document.getElementById('pmStock').value)||0,
-    category: document.getElementById('pmCategory').value.trim(),
-    barcode: document.getElementById('pmBarcode').value.trim()
-  };
-  if(id){ Object.assign(products.find(x=>x.id===id), data); }
-  else{ products.push({id:uid(), ...data}); }
-  saveProducts(); closeModal('productModal'); renderProducts(); toast('已儲存');
-}
-function deleteProduct(){
-  const id = document.getElementById('pmId').value;
-  const p = products.find(x=>x.id===id);
-  if(confirm(`確定刪除「${p.name}」? (不影響已完成的銷售紀錄)`)){
-    products = products.filter(x=>x.id!==id);
-    saveProducts(); closeModal('productModal'); renderProducts(); toast('已刪除');
-  }
+async function submitDaily(){
+  const date = document.getElementById('dailyDate').value || todayStr();
+  const rows = [];
+  const updates = [];
+  activeTrackedProducts().forEach(p=>{
+    const inp = dailyInput[p.id];
+    if(!inp) return;
+    const purchase=dval(p.id,'purchase'), ret=dval(p.id,'return_qty'), sold=dval(p.id,'sold'), sb=dval(p.id,'staff_buy'), tr=dval(p.id,'treat');
+    if(purchase||ret||sold||sb||tr){
+      const cs = closeStock(p);
+      rows.push({ date, dept:currentDept, product_code:p.code, product_name:p.name, open_stock:Number(p.stock||0),
+        purchase, return_qty:ret, sold, staff_buy:sb, treat:tr, price:Number(p.price||0), subtotal:money(sold*Number(p.price||0)), close_stock:cs, note:'' });
+      updates.push({id:p.id, stock:cs});
+    }
+  });
+  if(rows.length===0){ toast('尚未輸入任何異動'); return; }
+  const total = rows.reduce((a,b)=>a+b.subtotal,0);
+  if(!confirm(`確定送出【${currentDept}】${date} 日結?\n有異動商品:${rows.length} 項\n銷售總額:$${money(total)}\n\n送出後會更新各商品結算後庫存。`)) return;
+  try{
+    await sbInsert('daily_entries', rows);
+    // 逐筆更新商品庫存為結算後庫存
+    for(const u of updates){ await sbUpdate('products', u.id, {stock:u.stock, updated_at:new Date().toISOString()}); }
+    await loadProducts();
+    dailyInput={};
+    renderDaily();
+    toast(`日結完成,銷售總額 $${money(total)}`);
+  }catch(e){ alert('送出失敗:'+e.message); showNetBad(true); }
 }
 
 /* ================= 盤點 ================= */
-let stockInputs = {}; // {productId: actualQty}
-function renderStockList(){
-  const q = document.getElementById('stockSearch').value.trim().toLowerCase();
+function renderStock(){
+  const q = (document.getElementById('stockSearch').value||'').trim().toLowerCase();
+  let list = activeTrackedProducts();
+  if(q) list = list.filter(p=>p.name.toLowerCase().includes(q)||p.code.toLowerCase().includes(q));
   const el = document.getElementById('stockList');
-  let list = products.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant'));
-  if(q) list = list.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q));
-  if(products.length===0){ el.innerHTML=`<div class="empty">尚無商品</div>`; return; }
+  if(products.length===0){ el.innerHTML=`<div class="empty">此部門尚無商品</div>`; return; }
   if(list.length===0){ el.innerHTML=`<div class="empty">找不到商品</div>`; return; }
   el.innerHTML = list.map(p=>{
-    const val = stockInputs[p.id]!==undefined? stockInputs[p.id] : '';
-    const actual = val===''? null : parseInt(val);
-    const diff = actual===null? null : actual - p.stock;
+    const val = stockInput[p.id]!==undefined?stockInput[p.id]:'';
+    const sys = Number(p.stock||0);
     let diffHtml='';
-    if(diff!==null){
-      if(diff===0) diffHtml=`<span class="muted">相符</span>`;
-      else if(diff>0) diffHtml=`<span class="diff-pos">+${diff}</span>`;
-      else diffHtml=`<span class="diff-neg">${diff}</span>`;
+    if(val!==''){
+      const diff = Number(val)-sys;
+      if(diff===0) diffHtml=`<span class="diff-ok">正確</span>`;
+      else if(Math.abs(diff)>=10) diffHtml=`<span class="diff-warn">${diff>0?'+':''}${diff} 需主管</span>`;
+      else if(diff>0) diffHtml=`<span class="diff-pos">多 +${diff}</span>`;
+      else diffHtml=`<span class="diff-neg">短少 ${diff}</span>`;
     }
-    return `<div class="prod-item">
-      <div style="flex:1;">
-        <div class="prod-name">${esc(p.name)}</div>
-        <div class="prod-meta">帳面庫存 ${p.stock}</div>
-      </div>
-      <div style="width:88px;">
-        <input type="number" inputmode="numeric" placeholder="實際" value="${val}"
-          oninput="onStockInput('${p.id}', this.value)" style="text-align:center; padding:8px;">
-      </div>
-      <div style="width:46px; text-align:center;">${diffHtml}</div>
+    return `<div class="stk-item">
+      <div class="nm">${esc(p.name)} <span class="muted" style="font-weight:400;">${esc(p.code)}</span></div>
+      <div class="sys">${sys}</div>
+      <input type="number" inputmode="numeric" value="${val}" placeholder="實際" oninput="onStockInput('${p.id}',this.value)">
+      <div class="diff" id="diff_${p.id}">${diffHtml}</div>
     </div>`;
   }).join('');
 }
 function onStockInput(id, val){
-  if(val==='') delete stockInputs[id]; else stockInputs[id]=val;
-  // 只更新差異欄,不整頁重繪以免輸入跳掉:輕量做法是重繪該行的 diff,簡化為延遲重繪
-  clearTimeout(window._stkT); window._stkT=setTimeout(renderStockDiffs, 250);
+  if(val==='') delete stockInput[id]; else stockInput[id]=val;
+  const p = products.find(x=>x.id==id); const sys=Number(p.stock||0);
+  const el = document.getElementById('diff_'+id); if(!el) return;
+  if(val===''){ el.innerHTML=''; return; }
+  const diff = Number(val)-sys;
+  if(diff===0) el.innerHTML=`<span class="diff-ok">正確</span>`;
+  else if(Math.abs(diff)>=10) el.innerHTML=`<span class="diff-warn">${diff>0?'+':''}${diff} 需主管</span>`;
+  else if(diff>0) el.innerHTML=`<span class="diff-pos">多 +${diff}</span>`;
+  else el.innerHTML=`<span class="diff-neg">短少 ${diff}</span>`;
 }
-function renderStockDiffs(){
-  // 重繪整列(輸入框已失焦或停頓),保留焦點問題在停頓後才重繪
-  renderStockList();
-}
-function resetStockInputs(){ stockInputs={}; renderStockList(); }
-function submitStocktake(){
-  const ids = Object.keys(stockInputs).filter(id=>stockInputs[id]!=='');
+function resetStockInputs(){ stockInput={}; renderStock(); }
+async function submitStocktake(){
+  const date = todayStr();
+  const ids = Object.keys(stockInput).filter(id=>stockInput[id]!=='');
   if(ids.length===0){ toast('尚未輸入任何實際庫存'); return; }
-  const items=[];
+  const rows=[];
   ids.forEach(id=>{
-    const p = products.find(x=>x.id===id); if(!p) return;
-    const actual = parseInt(stockInputs[id]); if(isNaN(actual)) return;
-    items.push({productId:id, name:p.name, systemQty:p.stock, actualQty:actual, diff:actual-p.stock});
+    const p=products.find(x=>x.id==id); if(!p) return;
+    const actual=Number(stockInput[id]); if(isNaN(actual)) return;
+    const sys=Number(p.stock||0); const diff=actual-sys;
+    let status='正確';
+    if(diff!==0){ if(Math.abs(diff)>=10) status='需主管確認'; else if(diff>0) status='多出'; else status='短少'; }
+    rows.push({date, dept:currentDept, product_code:p.code, product_name:p.name, system_stock:sys, actual_stock:actual, diff, status, note:''});
   });
-  if(items.length===0){ toast('無有效資料'); return; }
-  const diffCount = items.filter(i=>i.diff!==0).length;
-  if(!confirm(`本次盤點 ${items.length} 項,其中 ${diffCount} 項有差異。\n確定要以實際數量更新庫存?`)) return;
-  // 更新庫存
-  items.forEach(i=>{ const p=products.find(x=>x.id===i.productId); if(p) p.stock=i.actualQty; });
-  const rec = {id:uid(), datetime:nowISO(), items};
-  stocktakes.push(rec); saveStocktakes(); saveProducts();
-  stockInputs={}; renderStockList();
-  toast(`盤點完成,已更新 ${items.length} 項庫存`);
+  const warn = rows.filter(r=>r.status==='需主管確認').length;
+  const diffCount = rows.filter(r=>r.diff!==0).length;
+  let msg = `確定儲存【${currentDept}】盤點?\n盤點 ${rows.length} 項,差異 ${diffCount} 項`;
+  if(warn) msg += `\n⚠️ 其中 ${warn} 項差異達10以上,需主管確認`;
+  if(!confirm(msg)) return;
+  try{
+    await sbInsert('stocktakes', rows);
+    stockInput={};
+    renderStock();
+    toast(`盤點已儲存(${rows.length} 項)`);
+  }catch(e){ alert('儲存失敗:'+e.message); showNetBad(true); }
 }
 
 /* ================= 報表 ================= */
@@ -651,421 +509,175 @@ function switchReport(mode){
   document.getElementById('report-stock').style.display = mode==='stock'?'block':'none';
   renderReport();
 }
-function renderReport(){
-  if(reportMode==='sales') renderSalesReport(); else renderStockReport();
+async function renderReport(){
+  if(reportMode==='sales') await renderSalesReport(); else await renderStockReport();
 }
-function renderSalesReport(){
-  const today=new Date();
-  const todaySales = sales.filter(s=>isSameDay(s.datetime, today));
-  let rev=0, items=0, profit=0;
-  todaySales.forEach(s=>{ rev+=s.total; s.items.forEach(it=>{ items+=it.qty; profit+=(it.price-(it.cost||0))*it.qty; }); });
-  document.getElementById('todayRevenue').textContent='$'+money(rev);
-  document.getElementById('todayCount').textContent=todaySales.length;
-  document.getElementById('todayItems').textContent=items;
-  document.getElementById('todayProfit').textContent='$'+money(profit);
+async function renderSalesReport(){
+  const el = document.getElementById('salesReport');
+  try{
+    const data = await sbSelect('daily_entries', `dept=eq.${enc(currentDept)}&order=date.desc,id.desc&limit=500`);
+    if(data.length===0){ el.innerHTML=`<div class="empty">尚無日結紀錄</div>`; return; }
+    // 依日期彙總
+    const byDay={};
+    data.forEach(r=>{ if(!byDay[r.date]) byDay[r.date]={sold:0,amt:0,items:0}; byDay[r.date].amt+=Number(r.subtotal); byDay[r.date].sold+=Number(r.sold); if(Number(r.sold)>0) byDay[r.date].items++; });
+    let html = `<table><tr><th>日期</th><th class="num">售出件數</th><th class="num">有銷售品項</th><th class="num">銷售總額</th></tr>`;
+    Object.keys(byDay).sort().reverse().forEach(d=>{ const v=byDay[d]; html+=`<tr><td>${d}</td><td class="num">${v.sold}</td><td class="num">${v.items}</td><td class="num">$${money(v.amt)}</td></tr>`; });
+    html += `</table>`;
+    el.innerHTML = html;
+  }catch(e){ el.innerHTML=`<div class="empty">載入失敗</div>`; showNetBad(true); }
+}
+async function renderStockReport(){
+  const el = document.getElementById('stockReport');
+  try{
+    const data = await sbSelect('stocktakes', `dept=eq.${enc(currentDept)}&order=date.desc,id.desc&limit=500`);
+    if(data.length===0){ el.innerHTML=`<div class="empty">尚無盤點紀錄</div>`; return; }
+    let html = `<table><tr><th>日期</th><th>商品</th><th class="num">系統</th><th class="num">實際</th><th class="num">差異</th><th>狀態</th></tr>`;
+    data.forEach(r=>{
+      const cls = r.diff===0?'':(r.status==='需主管確認'?'diff-warn':(r.diff>0?'diff-pos':'diff-neg'));
+      html+=`<tr><td>${r.date}</td><td>${esc(r.product_name)}</td><td class="num">${r.system_stock}</td><td class="num">${r.actual_stock}</td><td class="num ${cls}">${r.diff>0?'+':''}${r.diff}</td><td>${esc(r.status)}</td></tr>`;
+    });
+    html+=`</table>`;
+    el.innerHTML = html;
+  }catch(e){ el.innerHTML=`<div class="empty">載入失敗</div>`; showNetBad(true); }
+}
 
-  const el=document.getElementById('salesHistory');
-  if(sales.length===0){ el.innerHTML=`<div class="empty">尚無交易紀錄</div>`; return; }
-  const recent = sales.slice().reverse();
-  el.innerHTML = recent.map(s=>`
-    <details class="hist-item">
-      <summary class="row">
-        <div><b>$${s.total}</b> <span class="muted">(${s.items.reduce((a,b)=>a+b.qty,0)} 件)</span></div>
-        <div class="muted right">${fmtDate(s.datetime)}</div>
-      </summary>
-      <div style="padding:8px 0 2px;">
-        ${s.items.map(it=>`<div class="row" style="padding:3px 0;"><span>${esc(it.name)} ×${it.qty}</span><span class="right">$${money(it.price*it.qty)}</span></div>`).join('')}
-        <button class="btn red sm" style="margin-top:8px;" onclick="deleteSale('${s.id}', event)">刪除此筆</button>
+/* ================= 商品主檔 ================= */
+function renderProducts(){
+  const q = (document.getElementById('prodSearch').value||'').trim().toLowerCase();
+  let list = products.slice();
+  if(q) list = list.filter(p=>p.name.toLowerCase().includes(q)||p.code.toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q));
+  const el = document.getElementById('productList');
+  if(list.length===0){ el.innerHTML=`<div class="empty">${products.length?'找不到商品':'此部門尚無商品,點上方新增'}</div>`; return; }
+  el.innerHTML = list.map(p=>`
+    <div class="prod-item" onclick="openProductModal('${p.id}')">
+      <div style="flex:1;">
+        <div class="prod-name">${esc(p.name)} <span class="pill">${esc(p.code)}</span> ${p.category?`<span class="pill cat">${esc(p.category)}</span>`:''} ${p.active===false?'<span class="badge-off">停用</span>':''}</div>
+        <div class="prod-meta">單價 $${p.price}${p.member_price!=null?` ・會員 $${p.member_price}`:''}${p.staff_price!=null?` ・員工 $${p.staff_price}`:''}${p.note?` ・${esc(p.note)}`:''}</div>
       </div>
-    </details>`).join('');
+      <div class="center"><div style="font-weight:700;">${p.stock||0}</div><div class="muted" style="font-size:11px;">庫存</div></div>
+    </div>`).join('');
 }
-function deleteSale(id, ev){
-  if(ev) ev.preventDefault();
-  if(!confirm('刪除此筆交易? (庫存會還原)')) return;
-  const s = sales.find(x=>x.id===id); if(!s) return;
-  s.items.forEach(it=>{ const p=products.find(x=>x.id===it.productId); if(p) p.stock+=it.qty; });
-  sales = sales.filter(x=>x.id!==id);
-  saveSales(); saveProducts(); renderSalesReport(); toast('已刪除,庫存已還原');
-}
-function renderStockReport(){
-  const el=document.getElementById('stockHistory');
-  if(stocktakes.length===0){ el.innerHTML=`<div class="empty">尚無盤點紀錄</div>`; return; }
-  const recent = stocktakes.slice().reverse();
-  el.innerHTML = recent.map(r=>{
-    const diffItems = r.items.filter(i=>i.diff!==0);
-    return `<details class="hist-item">
-      <summary class="row">
-        <div><b>盤點 ${r.items.length} 項</b> <span class="muted">${diffItems.length} 項有差異</span></div>
-        <div class="muted right">${fmtDate(r.datetime)}</div>
-      </summary>
-      <div style="padding:8px 0 2px;">
-        <table><tr><th>商品</th><th class="num">帳面</th><th class="num">實際</th><th class="num">差異</th></tr>
-        ${r.items.map(i=>`<tr><td>${esc(i.name)}</td><td class="num">${i.systemQty}</td><td class="num">${i.actualQty}</td>
-          <td class="num ${i.diff>0?'diff-pos':i.diff<0?'diff-neg':''}">${i.diff>0?'+':''}${i.diff}</td></tr>`).join('')}
-        </table>
-      </div>
-    </details>`;
-  }).join('');
-}
-
-/* ================= CSV 匯出 ================= */
-function downloadFile(name, content, type='text/csv;charset=utf-8'){
-  const BOM='﻿';
-  const blob=new Blob([BOM+content],{type});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download=name; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-function csvCell(v){ v=String(v??''); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; }
-function exportSalesCSV(){
-  if(sales.length===0){ toast('無資料可匯出'); return; }
-  let rows=['交易時間,商品,售價,數量,小計'];
-  sales.forEach(s=>s.items.forEach(it=>{
-    rows.push([fmtDate(s.datetime),it.name,it.price,it.qty,money(it.price*it.qty)].map(csvCell).join(','));
-  }));
-  downloadFile('銷售紀錄_'+dateStamp()+'.csv', rows.join('\n'));
-  toast('已匯出銷售 CSV');
-}
-function exportStockCSV(){
-  if(stocktakes.length===0){ toast('無資料可匯出'); return; }
-  let rows=['盤點時間,商品,帳面庫存,實際庫存,差異'];
-  stocktakes.forEach(r=>r.items.forEach(i=>{
-    rows.push([fmtDate(r.datetime),i.name,i.systemQty,i.actualQty,i.diff].map(csvCell).join(','));
-  }));
-  downloadFile('盤點紀錄_'+dateStamp()+'.csv', rows.join('\n'));
-  toast('已匯出盤點 CSV');
-}
-function dateStamp(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`; }
-
-/* ================= 匯出 Excel(三分頁,含公式) ================= */
-function exportExcel(){
-  if(typeof XLSX==='undefined'){ toast('Excel 元件尚未載入,請重新整理'); return; }
-  if(products.length===0){ toast('尚無商品'); return; }
-  const wb = XLSX.utils.book_new();
-  const sorted = products.slice().sort((a,b)=>(a.code||'').localeCompare(b.code||'','zh-Hant'));
-
-  /* 分頁 1:商品清單 */
-  const prodAOA = [['代碼','品名','分類','售價','成本','庫存']];
-  sorted.forEach(p=> prodAOA.push([p.code||'', p.name, p.category||'', Number(p.price)||0, Number(p.cost)||0, Number(p.stock)||0]));
-  const ws1 = XLSX.utils.aoa_to_sheet(prodAOA);
-  ws1['!cols'] = [{wch:8},{wch:18},{wch:10},{wch:8},{wch:8},{wch:8}];
-  XLSX.utils.book_append_sheet(wb, ws1, '商品清單');
-
-  /* 分頁 2:盤點表(實際數量留空,差異用公式 =實際-帳面)
-     公式儲存格需附快取值,否則 SheetJS 存檔會丟棄公式 */
-  const stockAOA = [['代碼','品名','帳面庫存','實際數量','差異(實際-帳面)']];
-  sorted.forEach(p=> stockAOA.push([p.code||'', p.name, Number(p.stock)||0, '', '']));
-  const ws2 = XLSX.utils.aoa_to_sheet(stockAOA);
-  sorted.forEach((p,i)=>{ const r=i+2; ws2['E'+r] = {t:'str', v:'', f:`IF(D${r}="","",D${r}-C${r})`}; });
-  ws2['!cols'] = [{wch:8},{wch:18},{wch:10},{wch:10},{wch:14}];
-  XLSX.utils.book_append_sheet(wb, ws2, '盤點表');
-
-  /* 分頁 3:營業報表(每日彙總,含合計列 SUM) */
-  const byDay = {};
-  sales.forEach(s=>{
-    const d=new Date(s.datetime);
-    const key=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-    if(!byDay[key]) byDay[key]={count:0,items:0,rev:0,profit:0};
-    byDay[key].count++;
-    s.items.forEach(it=>{ byDay[key].items+=it.qty; byDay[key].rev+=it.price*it.qty; byDay[key].profit+=(it.price-(it.cost||0))*it.qty; });
-  });
-  const repAOA = [['日期','交易筆數','售出件數','營業額','預估毛利']];
-  const tot = {count:0, items:0, rev:0, profit:0};
-  Object.keys(byDay).sort().forEach(k=>{
-    const v=byDay[k];
-    repAOA.push([k, v.count, v.items, money(v.rev), money(v.profit)]);
-    tot.count+=v.count; tot.items+=v.items; tot.rev+=v.rev; tot.profit+=v.profit;
-  });
-  const ws3 = XLSX.utils.aoa_to_sheet(repAOA);
-  const dataRows = repAOA.length;          // 含表頭;資料列 = 2..dataRows
-  if(dataRows > 1){
-    const tr = dataRows + 1;                // 合計列
-    ws3['A'+tr] = {t:'s', v:'合計'};
-    // 公式須附快取值才不會被 SheetJS 丟棄
-    const cache = {B:tot.count, C:tot.items, D:money(tot.rev), E:money(tot.profit)};
-    ['B','C','D','E'].forEach(col=>{ ws3[col+tr] = {t:'n', v:cache[col], f:`SUM(${col}2:${col}${dataRows})`}; });
-    ws3['!ref'] = `A1:E${tr}`;
+function openProductModal(id){
+  document.getElementById('pmId').value = id||'';
+  document.getElementById('pmDeleteBtn').style.display = id?'block':'none';
+  if(id){
+    const p = products.find(x=>x.id==id);
+    document.getElementById('pmTitle').textContent='編輯商品';
+    document.getElementById('pmCode').value=p.code;
+    document.getElementById('pmDept').value=p.dept;
+    document.getElementById('pmName').value=p.name;
+    document.getElementById('pmPrice').value=p.price;
+    document.getElementById('pmCategory').value=p.category||'';
+    document.getElementById('pmMember').value=p.member_price!=null?p.member_price:'';
+    document.getElementById('pmStaff').value=p.staff_price!=null?p.staff_price:'';
+    document.getElementById('pmStock').value=p.stock||0;
+    document.getElementById('pmNote').value=p.note||'';
+    document.getElementById('pmTrack').checked=p.track_stock!==false;
+    document.getElementById('pmActive').checked=p.active!==false;
+  }else{
+    document.getElementById('pmTitle').textContent='新增商品';
+    document.getElementById('pmCode').value=nextCode();
+    document.getElementById('pmDept').value=currentDept;
+    ['pmName','pmPrice','pmCategory','pmMember','pmStaff','pmNote'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('pmStock').value='0';
+    document.getElementById('pmTrack').checked=true;
+    document.getElementById('pmActive').checked=true;
   }
-  ws3['!cols'] = [{wch:12},{wch:10},{wch:10},{wch:10},{wch:12}];
-  XLSX.utils.book_append_sheet(wb, ws3, '營業報表');
-
-  XLSX.writeFile(wb, '販賣部報表_'+dateStamp()+'.xlsx');
-  toast('已匯出 Excel');
+  openModalEl('productModal');
 }
-
-/* ================= 雲端同步(Supabase) ================= */
-const SUPABASE_URL = 'https://uofrbuofyfcatgbjxjde.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZnJidW9meWZjYXRnYmp4amRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE3NzMsImV4cCI6MjA5NTcyNzc3M30.ZKu0i73mpEmem9R3m3p_TXvBMab3XG5G8CSJBiyAsXA';
-function cloudErrMsg(m){
-  if(m==='PIN_MISMATCH') return '密碼錯誤';
-  if(m==='NOT_FOUND') return '找不到這個店家代碼(雲端尚無此資料)';
-  if(m==='CODE_REQUIRED') return '請輸入店家代碼';
-  if(m==='PIN_REQUIRED') return '請輸入密碼';
-  return m || '連線發生問題';
+function nextCode(){
+  const prefix = currentDept==='泳裝部'?'A':'B';
+  let max=0;
+  products.forEach(p=>{ const m=new RegExp('^'+prefix+'(\\d+)$').exec((p.code||'').trim()); if(m){ const n=parseInt(m[1]); if(n>max) max=n; } });
+  return prefix+String(max+1).padStart(2,'0');
 }
-async function callRPC(fn, body){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
-    method:'POST',
-    headers:{ 'apikey':SUPABASE_ANON, 'Authorization':'Bearer '+SUPABASE_ANON, 'Content-Type':'application/json' },
-    body: JSON.stringify(body)
-  });
-  const out = await res.json().catch(()=>null);
-  if(!res.ok) throw new Error(cloudErrMsg(out && out.message));
-  return out;
-}
-function cloudCreds(){
-  const code = document.getElementById('cloudCode').value.trim();
-  const pin  = document.getElementById('cloudPin').value.trim();
-  return {code, pin};
-}
-async function cloudUpload(){
-  const {code, pin} = cloudCreds();
-  if(!code || !pin){ toast('請輸入店家代碼與密碼'); return; }
-  if(!confirm(`要把本機資料上傳到雲端嗎?\n店家代碼:${code}\n(若雲端已有同代碼資料,會被本機覆蓋)`)) return;
-  const data = {products, sales, stocktakes, uidseq:_uidSeq, version:1, savedAt:nowISO()};
-  try{
-    const r = await callRPC('save_backup', {p_code:code, p_pin:pin, p_data:data});
-    localStorage.setItem('fb_cloud_code', code); localStorage.setItem('fb_cloud_pin', pin);
-    toast(r==='created' ? '已建立雲端備份 ☁️' : '已更新雲端備份 ☁️');
-  }catch(e){ alert('上傳失敗:'+e.message); }
-}
-async function cloudDownload(){
-  const {code, pin} = cloudCreds();
-  if(!code || !pin){ toast('請輸入店家代碼與密碼'); return; }
-  if(!confirm(`要從雲端下載並「覆蓋本機目前所有資料」嗎?\n店家代碼:${code}`)) return;
-  try{
-    const d = await callRPC('load_backup', {p_code:code, p_pin:pin});
-    if(!d || !Array.isArray(d.products)) throw new Error('雲端資料格式不正確');
-    products = d.products||[]; sales = d.sales||[]; stocktakes = d.stocktakes||[];
-    if(typeof d.uidseq === 'number'){ _uidSeq = d.uidseq; DB.set('fb_uidseq', _uidSeq); }
-    saveProducts(); saveSales(); saveStocktakes();
-    localStorage.setItem('fb_cloud_code', code); localStorage.setItem('fb_cloud_pin', pin);
-    switchTab('report'); renderReport();
-    toast(`已從雲端下載(商品 ${products.length} 項)`);
-  }catch(e){ alert('下載失敗:'+e.message); }
-}
-
-/* ================= 備份 / 還原 / 重設 ================= */
-function backupData(){
-  const data={products,sales,stocktakes,exportedAt:nowISO(),version:1};
-  downloadFile('販賣部備份_'+dateStamp()+'.json', JSON.stringify(data,null,2), 'application/json');
-  toast('已下載備份檔');
-}
-function restoreData(ev){
-  const file=ev.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      if(!d.products) throw new Error('格式錯誤');
-      if(!confirm('還原備份會覆蓋目前所有資料,確定?')) return;
-      products=d.products||[]; sales=d.sales||[]; stocktakes=d.stocktakes||[];
-      saveProducts(); saveSales(); saveStocktakes();
-      switchTab('report'); toast('已還原備份');
-    }catch(err){ alert('還原失敗:檔案格式不正確'); }
-    ev.target.value='';
-  };
-  reader.readAsText(file);
-}
-function resetAll(){
-  if(!confirm('⚠️ 將清除所有商品、銷售與盤點資料,且無法復原!\n建議先備份。確定要清除?')) return;
-  if(!confirm('再次確認:真的要清除全部資料?')) return;
-  products=[]; sales=[]; stocktakes=[]; cart={}; stockInputs={};
-  saveProducts(); saveSales(); saveStocktakes();
-  switchTab('sale'); toast('已清除全部資料');
-}
-
-/* ================= QR 碼:產生與比對 ================= */
-// 每個商品的 QR 內容:優先用「固定商品代碼」,其次條碼,最後內部編號
-// 用代碼的好處:之後改名稱 / 價格,QR 都不用重印
-function productQRValue(p){
-  if(p.code && p.code.trim()) return p.code.trim();
-  if(p.barcode && p.barcode.trim()) return p.barcode.trim();
-  return 'PID:'+p.id;
-}
-function findProductByScan(text){
-  text = String(text).trim();
-  if(text.startsWith('PID:')){ const id=text.slice(4); return products.find(p=>p.id===id)||null; }
-  return products.find(p=> p.code && p.code.trim()===text)
-      || products.find(p=> p.barcode && p.barcode.trim()===text)
-      || products.find(p=> p.name===text)
-      || null;
-}
-function makeQRDataURL(text){
-  const qr = qrcode(0, 'M');   // 0 = 自動版本, M = 中等容錯
-  qr.addData(text); qr.make();
-  return qr.createDataURL(6, 10);
-}
-
-/* ----- 顯示 / 列印 QR ----- */
-let _qrPrintProduct = null;
-function showProductQR(){
+async function saveProduct(){
   const id = document.getElementById('pmId').value;
-  const p = products.find(x=>x.id===id); if(!p) return;
-  const val = productQRValue(p);
-  document.getElementById('qrTitle').textContent = p.name;
-  document.getElementById('qrBox').innerHTML = `<img alt="QR" src="${makeQRDataURL(val)}" style="width:220px; height:220px; image-rendering:pixelated;">`;
-  document.getElementById('qrSub').innerHTML = `<span style="font-size:18px; font-weight:800; letter-spacing:1px; color:#0f172a;">${esc(val)}</span><br>售價 $${p.price}(改名稱 / 改價格都不用重印)`;
-  _qrPrintProduct = p;
-  openModalEl('qrModal');
-}
-function renderPrintArea(list){
-  const area = document.getElementById('printArea');
-  area.innerHTML = `<h2 style="text-align:center; margin:8px 0 14px;">商品 QR 標籤</h2><div class="qr-grid">`
-    + list.map(p=>`<div class="qr-cell">
-        <img alt="QR" src="${makeQRDataURL(productQRValue(p))}" style="width:100%; max-width:130px; image-rendering:pixelated;">
-        <div class="code">${esc(productQRValue(p))}</div>
-        <div class="nm">${esc(p.name)}</div><div class="pr">$${p.price}</div>
-      </div>`).join('')
-    + `</div>`;
-}
-function waitForImages(container){
-  const imgs = Array.from(container.querySelectorAll('img'));
-  return Promise.all(imgs.map(img => (img.complete && img.naturalWidth)
-    ? Promise.resolve()
-    : new Promise(res => { img.onload = img.onerror = res; })));
-}
-async function doPrint(){
-  const area = document.getElementById('printArea');
-  await waitForImages(area);
-  await new Promise(r => setTimeout(r, 60)); // 給瀏覽器排版一點時間
-  window.print();
-}
-async function printSingleQR(){ if(_qrPrintProduct){ renderPrintArea([_qrPrintProduct]); await doPrint(); } }
-async function printAllQR(){
-  if(products.length===0){ toast('尚無商品'); return; }
-  renderPrintArea(products.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant')));
-  await doPrint();
-}
-
-/* ----- 相機掃描 ----- */
-const scanState = {stream:null, raf:null, active:false, paused:false, lastText:'', cooldownUntil:0};
-let _scanCanvas, _scanCtx;
-async function openScanner(){
-  if(products.length===0){ toast('尚無商品,請先新增'); return; }
-  const box = document.getElementById('scanResult'); box.innerHTML='';
-  document.getElementById('scanModal').classList.add('show');
-  const video = document.getElementById('scanVideo');
+  const code = document.getElementById('pmCode').value.trim();
+  const dept = document.getElementById('pmDept').value;
+  const name = document.getElementById('pmName').value.trim();
+  const price = parseFloat(document.getElementById('pmPrice').value);
+  if(!code){ toast('請輸入商品代號'); return; }
+  if(!name){ toast('請輸入商品名稱'); return; }
+  if(isNaN(price)||price<0){ toast('請輸入有效單價'); return; }
+  const mem = document.getElementById('pmMember').value; const stf = document.getElementById('pmStaff').value;
+  const data = {
+    code, dept, name, price:money(price),
+    category: document.getElementById('pmCategory').value.trim(),
+    member_price: mem===''?null:money(parseFloat(mem)),
+    staff_price: stf===''?null:money(parseFloat(stf)),
+    stock: parseInt(document.getElementById('pmStock').value)||0,
+    note: document.getElementById('pmNote').value.trim(),
+    track_stock: document.getElementById('pmTrack').checked,
+    active: document.getElementById('pmActive').checked,
+    updated_at: new Date().toISOString()
+  };
   try{
-    scanState.stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    if(id){ await sbUpdate('products', id, data); }
+    else{ await sbInsert('products', [data]); }
+    await loadProducts(); closeModal('productModal'); renderProducts();
+    if(currentDept!==dept){ toast('已儲存(商品在'+dept+')'); } else toast('已儲存');
   }catch(e){
-    box.innerHTML = `<div class="diff-neg" style="font-weight:700;">無法開啟相機</div>
-      <div class="muted" style="margin:6px 0 10px;">${esc(e.message||e)}<br>請確認已允許相機權限,且用 https 或 localhost 開啟。</div>
-      <button class="btn block" onclick="closeScanner()">關閉</button>`;
-    return;
-  }
-  video.srcObject = scanState.stream;
-  try{ await video.play(); }catch(e){}
-  scanState.active = true; scanState.paused = false; scanState.lastText=''; scanState.cooldownUntil=0;
-  tickScan();
-}
-function tickScan(){
-  if(!scanState.active) return;
-  scanState.raf = requestAnimationFrame(tickScan);
-  if(scanState.paused) return;
-  const video = document.getElementById('scanVideo');
-  if(!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-  if(!_scanCanvas){ _scanCanvas=document.createElement('canvas'); _scanCtx=_scanCanvas.getContext('2d',{willReadFrequently:true}); }
-  _scanCanvas.width = video.videoWidth; _scanCanvas.height = video.videoHeight;
-  if(!_scanCanvas.width) return;
-  _scanCtx.drawImage(video, 0, 0, _scanCanvas.width, _scanCanvas.height);
-  const img = _scanCtx.getImageData(0, 0, _scanCanvas.width, _scanCanvas.height);
-  const code = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'});
-  if(code && code.data){
-    const t = code.data.trim();
-    if(t===scanState.lastText && performance.now() < scanState.cooldownUntil) return; // 剛掃過同一個,稍等
-    onScanDecoded(t);
+    if(String(e.message).includes('409')||String(e.message).includes('duplicate')) alert('儲存失敗:此部門已有相同代號');
+    else alert('儲存失敗:'+e.message);
   }
 }
-function onScanDecoded(text){
-  scanState.paused = true;
-  if(navigator.vibrate) navigator.vibrate(60);
-  const box = document.getElementById('scanResult');
-  const p = findProductByScan(text);
-  if(!p){
-    box.innerHTML = `<div class="diff-neg" style="font-weight:700;">⚠️ 找不到對應商品</div>
-      <div class="muted" style="margin:4px 0 10px;">掃到內容:${esc(text)}</div>
-      <button class="btn block" onclick="resumeScan('${esc(text)}')">繼續掃描</button>`;
-    return;
-  }
-  const cur = stockInputs[p.id]!==undefined ? stockInputs[p.id] : '';
-  box.innerHTML = `
-    <div class="scan-found">${esc(p.name)}</div>
-    <div class="muted" style="margin-bottom:8px;">帳面庫存 ${p.stock}${cur!==''?` ・已輸入 ${cur}`:''}</div>
-    <label>實際數量</label>
-    <input id="scanQty" type="number" inputmode="numeric" value="${cur}" placeholder="輸入清點到的數量" style="font-size:18px;">
-    <div class="grid2" style="margin-top:10px;">
-      <button class="btn gray" onclick="resumeScan('${esc(productQRValue(p))}')">略過</button>
-      <button class="btn green" onclick="confirmScanQty('${p.id}')">確認並繼續</button>
-    </div>`;
-  setTimeout(()=>{ const q=document.getElementById('scanQty'); if(q){ q.focus(); q.select(); } }, 120);
-}
-function confirmScanQty(id){
-  const el = document.getElementById('scanQty');
-  const v = el ? el.value : '';
-  if(v==='' || isNaN(parseInt(v))){ toast('請輸入數量'); return; }
-  stockInputs[id] = String(parseInt(v));
-  const p = products.find(x=>x.id===id);
-  toast(`${p?p.name:''} 已記錄 ${parseInt(v)}`);
-  resumeScan(p?productQRValue(p):'');
-}
-function resumeScan(lastText){
-  document.getElementById('scanResult').innerHTML='';
-  scanState.lastText = lastText||'';
-  scanState.cooldownUntil = performance.now() + 1500;
-  scanState.paused = false;
-}
-function closeScanner(){
-  scanState.active = false; scanState.paused = false;
-  if(scanState.raf) cancelAnimationFrame(scanState.raf);
-  if(scanState.stream){ scanState.stream.getTracks().forEach(t=>t.stop()); scanState.stream=null; }
-  const v=document.getElementById('scanVideo'); if(v) v.srcObject=null;
-  document.getElementById('scanModal').classList.remove('show');
-  renderStockList();
+async function deleteProduct(){
+  const id = document.getElementById('pmId').value;
+  const p = products.find(x=>x.id==id);
+  if(!confirm(`確定刪除「${p.name}」?(不影響已送出的日結 / 盤點紀錄)`)) return;
+  try{ await sbDelete('products', id); await loadProducts(); closeModal('productModal'); renderProducts(); toast('已刪除'); }
+  catch(e){ alert('刪除失敗:'+e.message); }
 }
 
-/* ================= 工具 ================= */
-function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* ================= Excel 匯出 ================= */
+function dateStamp(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`; }
+async function exportExcel(){
+  if(typeof XLSX==='undefined'){ toast('Excel 元件未載入'); return; }
+  try{
+    const data = await sbSelect('daily_entries', `dept=eq.${enc(currentDept)}&order=date.desc,id.desc&limit=2000`);
+    if(data.length===0){ toast('無資料可匯出'); return; }
+    const aoa=[['日期','部門','代號','品名','原庫存','進貨','退貨','銷售','員購','招待','單價','銷售小計','結算後庫存']];
+    data.forEach(r=>aoa.push([r.date,r.dept,r.product_code,r.product_name,r.open_stock,r.purchase,r.return_qty,r.sold,r.staff_buy,r.treat,r.price,r.subtotal,r.close_stock]));
+    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:11},{wch:8},{wch:7},{wch:14},{wch:8},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:7},{wch:9},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, '日結表');
+    XLSX.writeFile(wb, `${currentDept}_日結表_${dateStamp()}.xlsx`);
+    toast('已匯出 Excel');
+  }catch(e){ alert('匯出失敗:'+e.message); }
+}
+async function exportStockExcel(){
+  if(typeof XLSX==='undefined'){ toast('Excel 元件未載入'); return; }
+  try{
+    const data = await sbSelect('stocktakes', `dept=eq.${enc(currentDept)}&order=date.desc,id.desc&limit=2000`);
+    if(data.length===0){ toast('無資料可匯出'); return; }
+    const aoa=[['日期','部門','代號','品名','系統結算後庫存','實際盤點數量','差異','狀態']];
+    data.forEach(r=>aoa.push([r.date,r.dept,r.product_code,r.product_name,r.system_stock,r.actual_stock,r.diff,r.status]));
+    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:11},{wch:8},{wch:7},{wch:14},{wch:14},{wch:12},{wch:8},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws, '盤點差異表');
+    XLSX.writeFile(wb, `${currentDept}_盤點差異表_${dateStamp()}.xlsx`);
+    toast('已匯出 Excel');
+  }catch(e){ alert('匯出失敗:'+e.message); }
+}
 
-/* 搜尋事件 */
-document.getElementById('saleSearch').addEventListener('input', renderCatalog);
+/* ================= 搜尋事件 ================= */
+document.getElementById('dailySearch').addEventListener('input', ()=>{ clearTimeout(window._d1); window._d1=setTimeout(renderDaily,200); });
+document.getElementById('stockSearch').addEventListener('input', ()=>{ clearTimeout(window._d2); window._d2=setTimeout(renderStock,200); });
 document.getElementById('prodSearch').addEventListener('input', renderProducts);
-document.getElementById('stockSearch').addEventListener('input', ()=>{ clearTimeout(window._sk2); window._sk2=setTimeout(renderStockList,200); });
 
-/* 首次載入示範資料(僅在完全空白時) */
-if(products.length===0 && sales.length===0 && stocktakes.length===0 && !localStorage.getItem('fb_inited')){
-  products = [
-    {id:uid(),name:'可樂',price:20,cost:12,stock:24,category:'飲料',barcode:''},
-    {id:uid(),name:'礦泉水',price:15,cost:8,stock:36,category:'飲料',barcode:''},
-    {id:uid(),name:'洋芋片',price:30,cost:20,stock:18,category:'零食',barcode:''},
-    {id:uid(),name:'巧克力',price:35,cost:22,stock:12,category:'零食',barcode:''},
-    {id:uid(),name:'泡麵',price:25,cost:15,stock:20,category:'食品',barcode:''}
-  ];
-  saveProducts(); localStorage.setItem('fb_inited','1');
+/* ================= 啟動 ================= */
+document.getElementById('dailyDate').value = todayStr();
+if(currentDept){
+  document.getElementById('deptPick').style.display='none';
+  document.getElementById('deptLabel').textContent = currentDept;
+  refreshAll();
+}else{
+  document.getElementById('deptPick').style.display='flex';
 }
 
-/* 為尚未有代碼的舊商品自動補上固定代碼 */
-(function migrateCodes(){
-  let changed=false;
-  products.forEach(p=>{ if(!p.code || !p.code.trim()){ p.code=nextProductCode(); changed=true; } });
-  if(changed) saveProducts();
-})();
-
-/* 帶回上次使用的雲端代碼與密碼(同一裝置方便) */
-(function(){
-  const c = localStorage.getItem('fb_cloud_code'); const p = localStorage.getItem('fb_cloud_pin');
-  const ce = document.getElementById('cloudCode'), pe = document.getElementById('cloudPin');
-  if(ce && c) ce.value = c;
-  if(pe && p) pe.value = p;
-})();
-
-/* 初始化 */
-renderCatalog();
-
-/* 註冊 Service Worker(離線可用) */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
+/* Service Worker */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
 </html>

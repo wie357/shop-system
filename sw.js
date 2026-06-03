@@ -1,13 +1,11 @@
 /* 販賣部系統 Service Worker — 離線快取 */
-const CACHE = 'fanbu-v4';
+const CACHE = 'fanbu-v5';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './jsQR.js',
-  './qrcode.js',
   './xlsx.full.min.js'
 ];
 

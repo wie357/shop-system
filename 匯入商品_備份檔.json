@@ -1,0 +1,610 @@
+{
+  "products": [
+    {
+      "id": "impmpydh3xt-1",
+      "code": "A01",
+      "name": "泳帽",
+      "price": 90,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-2",
+      "code": "A04",
+      "name": "胸墊",
+      "price": 50,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-3",
+      "code": "A06",
+      "name": "寶貝球(大+小)",
+      "price": 100,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-4",
+      "code": "A07",
+      "name": "防水尿布",
+      "price": 60,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-5",
+      "code": "C01",
+      "name": "無線耳塞",
+      "price": 70,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-6",
+      "code": "C02",
+      "name": "手臂圈",
+      "price": 280,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-7",
+      "code": "C03",
+      "name": "泳圈24吋",
+      "price": 290,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-8",
+      "code": "C06",
+      "name": "除霧劑",
+      "price": 200,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-9",
+      "code": "C12",
+      "name": "矽膠泳帽",
+      "price": 260,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-a",
+      "code": "C15",
+      "name": "耳塞",
+      "price": 80,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-b",
+      "code": "C16",
+      "name": "baby泳帽",
+      "price": 190,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-c",
+      "code": "C21",
+      "name": "兒童蛙鏡290",
+      "price": 290,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-d",
+      "code": "C22",
+      "name": "成人蛙鏡350",
+      "price": 350,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-e",
+      "code": "C23",
+      "name": "baby蛙鏡",
+      "price": 390,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-f",
+      "code": "C24",
+      "name": "近視蛙鏡",
+      "price": 490,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-g",
+      "code": "C25",
+      "name": "成人蛙鏡390",
+      "price": 390,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-h",
+      "code": "E06",
+      "name": "浮板 450",
+      "price": 450,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-i",
+      "code": "E07",
+      "name": "座船",
+      "price": 560,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-j",
+      "code": "E08",
+      "name": "可愛浮板",
+      "price": 390,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-k",
+      "code": "P001",
+      "name": "泳衣",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-l",
+      "code": "P002",
+      "name": "泳褲",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-m",
+      "code": "D01",
+      "name": "小毛巾",
+      "price": 80,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-n",
+      "code": "D02",
+      "name": "大毛巾",
+      "price": 300,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-o",
+      "code": "D05",
+      "name": "沐浴乳包",
+      "price": 35,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-p",
+      "code": "D06",
+      "name": "雨衣",
+      "price": 30,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3xt-q",
+      "code": "D07",
+      "name": "玩具",
+      "price": 80,
+      "cost": 0,
+      "stock": 0,
+      "category": "泳具",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-r",
+      "code": "P003",
+      "name": "寶礦力",
+      "price": 35,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-s",
+      "code": "P004",
+      "name": "汽水",
+      "price": 35,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-t",
+      "code": "P005",
+      "name": "分解茶",
+      "price": 40,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-u",
+      "code": "P006",
+      "name": "水",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-v",
+      "code": "P007",
+      "name": "大麵",
+      "price": 80,
+      "cost": 0,
+      "stock": 0,
+      "category": "食品",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-w",
+      "code": "P008",
+      "name": "中麵",
+      "price": 65,
+      "cost": 0,
+      "stock": 0,
+      "category": "食品",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-x",
+      "code": "P009",
+      "name": "小麵",
+      "price": 55,
+      "cost": 0,
+      "stock": 0,
+      "category": "食品",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-y",
+      "code": "P010",
+      "name": "餅乾",
+      "price": 35,
+      "cost": 0,
+      "stock": 0,
+      "category": "食品",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-z",
+      "code": "P011",
+      "name": "波爾茶",
+      "price": 40,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-10",
+      "code": "P012",
+      "name": "客惟您",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-11",
+      "code": "P013",
+      "name": "加水",
+      "price": 10,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-12",
+      "code": "P014",
+      "name": "水蠻牛",
+      "price": 40,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-13",
+      "code": "P015",
+      "name": "可爾必思",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-14",
+      "code": "P016",
+      "name": "健酪",
+      "price": 35,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-15",
+      "code": "P017",
+      "name": "PIZZA",
+      "price": 85,
+      "cost": 0,
+      "stock": 0,
+      "category": "食品",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-16",
+      "code": "P018",
+      "name": "寶礦力(加購)",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-17",
+      "code": "P019",
+      "name": "汽水(加購)",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-18",
+      "code": "P020",
+      "name": "可爾必思(加購)",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-19",
+      "code": "P021",
+      "name": "寶礦力(會員)",
+      "price": 30,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1a",
+      "code": "P022",
+      "name": "汽水(會員)",
+      "price": 30,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1b",
+      "code": "P023",
+      "name": "水(會員)",
+      "price": 20,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1c",
+      "code": "P024",
+      "name": "寶礦力(員工)",
+      "price": 20,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1d",
+      "code": "P025",
+      "name": "汽水(員工)",
+      "price": 20,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1e",
+      "code": "P026",
+      "name": "分解茶(員工)",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1f",
+      "code": "P027",
+      "name": "水(員工)",
+      "price": 10,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1g",
+      "code": "P028",
+      "name": "可爾必思(員工)",
+      "price": 10,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1h",
+      "code": "P029",
+      "name": "波爾茶(員工)",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1i",
+      "code": "P030",
+      "name": "健酪(員工)",
+      "price": 20,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1j",
+      "code": "P031",
+      "name": "水蠻牛(員工)",
+      "price": 25,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1k",
+      "code": "P032",
+      "name": "寶礦力(招待)",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1l",
+      "code": "P033",
+      "name": "汽水(招待)",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1m",
+      "code": "P034",
+      "name": "分解茶(招待)",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1n",
+      "code": "P035",
+      "name": "水(招待)",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    },
+    {
+      "id": "impmpydh3y4-1o",
+      "code": "P036",
+      "name": "可爾必思(招待)",
+      "price": 0,
+      "cost": 0,
+      "stock": 0,
+      "category": "飲料",
+      "barcode": ""
+    }
+  ],
+  "sales": [],
+  "stocktakes": [],
+  "uidseq": 0,
+  "version": 1,
+  "savedAt": "2026-06-03T18:00:51.772Z",
+  "note": "由泳具+飲食盤點表匯入"
+}
