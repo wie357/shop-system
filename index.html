@@ -313,11 +313,15 @@
       <div class="field"><label>分類</label><input id="pmCategory" placeholder="飲料 / 食品 / 泳具…"></div>
     </div>
     <div class="grid2">
-      <div class="field"><label>會員價(選填)</label><input id="pmMember" type="number" inputmode="decimal" placeholder="—"></div>
       <div class="field"><label>員工價(選填)</label><input id="pmStaff" type="number" inputmode="decimal" placeholder="—"></div>
+      <div class="field"><label>招待價(選填)</label><input id="pmTreat" type="number" inputmode="decimal" placeholder="—"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>會員價(選填)</label><input id="pmMember" type="number" inputmode="decimal" placeholder="—"></div>
+      <div class="field"><label>加購價(選填)</label><input id="pmAddon" type="number" inputmode="decimal" placeholder="—"></div>
     </div>
     <div class="field"><label>目前庫存</label><input id="pmStock" type="number" inputmode="numeric" placeholder="0"></div>
-    <div class="field"><label>備註</label><input id="pmNote" placeholder="選填"></div>
+    <div class="field"><label>備註(文字)</label><input id="pmNote" placeholder="選填"></div>
     <div class="grid2" style="margin-bottom:10px;">
       <label class="switch"><input type="checkbox" id="pmTrack" checked> 計入庫存</label>
       <label class="switch"><input type="checkbox" id="pmActive" checked> 啟用中</label>
@@ -509,6 +513,13 @@ function getPrices(p){
   let pr = { normal:Number(p.price||0) };
   if(p.note){ try{ const o=JSON.parse(p.note); if(o && o.prices){ pr = Object.assign(pr, o.prices); } }catch(e){} }
   return pr;
+}
+// 取真正的備註文字(note 若是 JSON 則取 memo,否則就是純文字)
+function getMemo(p){
+  if(!p.note) return '';
+  const s=String(p.note).trim();
+  if(s.startsWith('{')){ try{ const o=JSON.parse(s); return o.memo||''; }catch(e){ return ''; } }
+  return p.note;
 }
 function hasMultiPrice(p){ const pr=getPrices(p); return pr.staff!==undefined || pr.treat!==undefined; }
 // 員工價(員購用):無則回一般價;招待價:無則 0
@@ -876,24 +887,27 @@ function openProductModal(id){
     document.getElementById('pmName').value=p.name;
     document.getElementById('pmPrice').value=p.price;
     document.getElementById('pmCategory').value=p.category||'';
-    document.getElementById('pmMember').value=p.member_price!=null?p.member_price:'';
-    document.getElementById('pmStaff').value=p.staff_price!=null?p.staff_price:'';
+    const pr = getPrices(p);
+    document.getElementById('pmStaff').value = pr.staff!==undefined?pr.staff:'';
+    document.getElementById('pmTreat').value = pr.treat!==undefined?pr.treat:'';
+    document.getElementById('pmMember').value = pr.member!==undefined?pr.member:'';
+    document.getElementById('pmAddon').value = pr.addon!==undefined?pr.addon:'';
     document.getElementById('pmStock').value=p.stock||0;
-    document.getElementById('pmNote').value=p.note||'';
+    document.getElementById('pmNote').value=getMemo(p);
     document.getElementById('pmTrack').checked=p.track_stock!==false;
     document.getElementById('pmActive').checked=p.active!==false;
   }else{
     document.getElementById('pmTitle').textContent='新增商品';
     document.getElementById('pmCode').value=nextCode();
     document.getElementById('pmDept').value=currentDept;
-    ['pmName','pmPrice','pmCategory','pmMember','pmStaff','pmNote'].forEach(i=>document.getElementById(i).value='');
+    ['pmName','pmPrice','pmCategory','pmMember','pmStaff','pmTreat','pmAddon','pmNote'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('pmStock').value='0';
     document.getElementById('pmTrack').checked=true;
     document.getElementById('pmActive').checked=true;
   }
   // 櫃台:欄位唯讀、隱藏儲存
   const ro = !isManager();
-  ['pmCode','pmDept','pmName','pmPrice','pmCategory','pmMember','pmStaff','pmStock','pmNote','pmTrack','pmActive'].forEach(i=>{
+  ['pmCode','pmDept','pmName','pmPrice','pmCategory','pmMember','pmStaff','pmTreat','pmAddon','pmStock','pmNote','pmTrack','pmActive'].forEach(i=>{
     const el=document.getElementById(i); if(!el) return;
     if(el.tagName==='SELECT'||el.type==='checkbox') el.disabled=ro; else el.readOnly=ro;
   });
@@ -931,14 +945,25 @@ async function saveProduct(){
   if(!code){ toast('請輸入商品代號'); return; }
   if(!name){ toast('請輸入商品名稱'); return; }
   if(isNaN(price)||price<0){ toast('請輸入有效單價'); return; }
-  const mem = document.getElementById('pmMember').value; const stf = document.getElementById('pmStaff').value;
+  // 收集多重價格
+  const numOrU = id => { const v=document.getElementById(id).value; return v===''?undefined:money(parseFloat(v)); };
+  const prices = { normal: money(price) };
+  const staff=numOrU('pmStaff'), treat=numOrU('pmTreat'), member=numOrU('pmMember'), addon=numOrU('pmAddon');
+  if(staff!==undefined) prices.staff=staff;
+  if(treat!==undefined) prices.treat=treat;
+  if(member!==undefined) prices.member=member;
+  if(addon!==undefined) prices.addon=addon;
+  const memo = document.getElementById('pmNote').value.trim();
+  const hasSpecial = Object.keys(prices).length>1;
+  // note:有特殊價→存 JSON{prices,memo};否則存純文字備註
+  const noteVal = hasSpecial ? JSON.stringify({prices, memo}) : memo;
   const data = {
     code, dept, name, price:money(price),
     category: document.getElementById('pmCategory').value.trim(),
-    member_price: mem===''?null:money(parseFloat(mem)),
-    staff_price: stf===''?null:money(parseFloat(stf)),
+    member_price: member!==undefined?member:null,
+    staff_price: staff!==undefined?staff:null,
     stock: parseInt(document.getElementById('pmStock').value)||0,
-    note: document.getElementById('pmNote').value.trim(),
+    note: noteVal,
     track_stock: document.getElementById('pmTrack').checked,
     active: document.getElementById('pmActive').checked,
     updated_at: new Date().toISOString()
