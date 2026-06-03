@@ -56,17 +56,19 @@
   nav.tabbar button{flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:var(--muted); font-size:11px; cursor:pointer;}
   nav.tabbar button.active{color:var(--blue);}
   nav.tabbar .ic{font-size:21px; line-height:1;}
-  /* 日結表格 */
-  .daily-item{border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px;}
-  .daily-item .top{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
-  .daily-item .nm{font-weight:700; font-size:15px;}
-  .daily-item .code{font-size:11px; color:var(--muted);}
-  .daily-fields{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
-  .daily-fields .fld{display:flex; flex-direction:column;}
-  .daily-fields .fld label{font-size:11px; margin-bottom:2px; text-align:center; color:var(--muted);}
-  .daily-fields .fld input{padding:8px 4px; text-align:center; font-size:15px;}
-  .daily-item .calc{display:flex; justify-content:space-between; margin-top:8px; font-size:13px; padding-top:8px; border-top:1px dashed var(--line);}
-  .daily-item .calc b{font-size:15px;}
+  /* 日結橫式表格 */
+  .tbl-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:12px;}
+  table.daily-tbl{width:100%; border-collapse:collapse; font-size:13px; min-width:640px;}
+  table.daily-tbl th, table.daily-tbl td{padding:7px 5px; border-bottom:1px solid var(--line); text-align:center; white-space:nowrap;}
+  table.daily-tbl thead th{position:sticky; top:0; background:#f8fafc; color:#475569; font-size:12px; font-weight:700; z-index:1;}
+  table.daily-tbl td.name{text-align:left; font-weight:600; position:sticky; left:0; background:#fff; min-width:96px;}
+  table.daily-tbl thead th.name{text-align:left; position:sticky; left:0; background:#f8fafc; z-index:2;}
+  table.daily-tbl td.code{color:var(--muted); font-size:11px;}
+  table.daily-tbl input{width:52px; padding:7px 3px; text-align:center; font-size:15px; border:1px solid var(--line); border-radius:8px;}
+  table.daily-tbl input.sold{border-color:#bfdbfe; background:#eff6ff;}
+  table.daily-tbl td.sub{font-weight:700; color:var(--blue); min-width:64px;}
+  table.daily-tbl td.cs{font-weight:700; min-width:48px;}
+  table.daily-tbl tr:nth-child(even) td:not(.name){background:#fcfdff;}
   .sold-hl{color:var(--blue);}
   /* 盤點 */
   .stk-item{display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--line);}
@@ -167,7 +169,6 @@
       <h2>📋 庫存盤點</h2>
       <p class="muted">依「系統結算後庫存」人工核對。輸入實際盤點數量,系統自動算差異。差異達 10 以上會提示主管確認。</p>
       <input class="search-box" id="stockSearch" placeholder="🔍 搜尋商品…" style="margin-top:8px;">
-      <div class="stk-head"><span class="nm">商品</span><span class="sys">系統</span><span class="act">實際</span><span class="dif">差異</span></div>
       <div id="stockList"><div class="loading">載入中…</div></div>
     </div>
     <button class="btn block green" onclick="submitStocktake()" style="margin-bottom:8px;">✓ 完成盤點(儲存差異紀錄)</button>
@@ -367,23 +368,30 @@ function renderDaily(){
   const el = document.getElementById('dailyList');
   if(products.length===0){ el.innerHTML = `<div class="empty">此部門尚無商品<br><br><button class="btn green" onclick="switchTab('products')">去新增商品</button></div>`; updateDailyTotal(); return; }
   if(list.length===0){ el.innerHTML = `<div class="empty">找不到符合的商品</div>`; updateDailyTotal(); return; }
-  el.innerHTML = list.map(p=>{
+  const body = list.map(p=>{
     const inp = dailyInput[p.id]||{};
     const g = k => inp[k]!==undefined?inp[k]:'';
     const sub = money(dval(p.id,'sold')*Number(p.price||0));
     const cs = closeStock(p);
-    return `<div class="daily-item">
-      <div class="top"><span class="nm">${esc(p.name)}</span><span class="code">${esc(p.code)}</span><span class="right muted">單價 $${p.price}　原庫存 ${p.stock||0}</span></div>
-      <div class="daily-fields">
-        <div class="fld"><label>進貨</label><input type="number" inputmode="numeric" value="${g('purchase')}" oninput="onDailyInput('${p.id}','purchase',this.value)"></div>
-        <div class="fld"><label>退貨</label><input type="number" inputmode="numeric" value="${g('return_qty')}" oninput="onDailyInput('${p.id}','return_qty',this.value)"></div>
-        <div class="fld"><label>銷售</label><input type="number" inputmode="numeric" value="${g('sold')}" oninput="onDailyInput('${p.id}','sold',this.value)" style="border-color:#bfdbfe;background:#eff6ff;"></div>
-        <div class="fld"><label>員購</label><input type="number" inputmode="numeric" value="${g('staff_buy')}" oninput="onDailyInput('${p.id}','staff_buy',this.value)"></div>
-        <div class="fld"><label>招待</label><input type="number" inputmode="numeric" value="${g('treat')}" oninput="onDailyInput('${p.id}','treat',this.value)"></div>
-      </div>
-      <div class="calc"><span>銷售小計 <b class="sold-hl" id="sub_${p.id}">$${sub}</b></span><span>結算後庫存 <b id="cs_${p.id}">${cs}</b></span></div>
-    </div>`;
+    return `<tr>
+      <td class="name">${esc(p.name)}<div class="code">${esc(p.code)}</div></td>
+      <td>${p.stock||0}</td>
+      <td><input type="number" inputmode="numeric" value="${g('purchase')}" oninput="onDailyInput('${p.id}','purchase',this.value)"></td>
+      <td><input type="number" inputmode="numeric" value="${g('return_qty')}" oninput="onDailyInput('${p.id}','return_qty',this.value)"></td>
+      <td><input class="sold" type="number" inputmode="numeric" value="${g('sold')}" oninput="onDailyInput('${p.id}','sold',this.value)"></td>
+      <td><input type="number" inputmode="numeric" value="${g('staff_buy')}" oninput="onDailyInput('${p.id}','staff_buy',this.value)"></td>
+      <td><input type="number" inputmode="numeric" value="${g('treat')}" oninput="onDailyInput('${p.id}','treat',this.value)"></td>
+      <td>$${p.price}</td>
+      <td class="sub" id="sub_${p.id}">$${sub}</td>
+      <td class="cs" id="cs_${p.id}">${cs}</td>
+    </tr>`;
   }).join('');
+  el.innerHTML = `<div class="tbl-scroll"><table class="daily-tbl">
+    <thead><tr>
+      <th class="name">品名 / 代號</th><th>原庫存</th><th>進貨</th><th>退貨</th><th>銷售</th><th>員購</th><th>招待</th><th>單價</th><th>銷售小計</th><th>結算後</th>
+    </tr></thead>
+    <tbody>${body}</tbody>
+  </table></div>`;
   updateDailyTotal();
 }
 function onDailyInput(id, key, val){
@@ -442,35 +450,32 @@ function renderStock(){
   const el = document.getElementById('stockList');
   if(products.length===0){ el.innerHTML=`<div class="empty">此部門尚無商品</div>`; return; }
   if(list.length===0){ el.innerHTML=`<div class="empty">找不到商品</div>`; return; }
-  el.innerHTML = list.map(p=>{
+  const body = list.map(p=>{
     const val = stockInput[p.id]!==undefined?stockInput[p.id]:'';
     const sys = Number(p.stock||0);
-    let diffHtml='';
-    if(val!==''){
-      const diff = Number(val)-sys;
-      if(diff===0) diffHtml=`<span class="diff-ok">正確</span>`;
-      else if(Math.abs(diff)>=10) diffHtml=`<span class="diff-warn">${diff>0?'+':''}${diff} 需主管</span>`;
-      else if(diff>0) diffHtml=`<span class="diff-pos">多 +${diff}</span>`;
-      else diffHtml=`<span class="diff-neg">短少 ${diff}</span>`;
-    }
-    return `<div class="stk-item">
-      <div class="nm">${esc(p.name)} <span class="muted" style="font-weight:400;">${esc(p.code)}</span></div>
-      <div class="sys">${sys}</div>
-      <input type="number" inputmode="numeric" value="${val}" placeholder="實際" oninput="onStockInput('${p.id}',this.value)">
-      <div class="diff" id="diff_${p.id}">${diffHtml}</div>
-    </div>`;
+    return `<tr>
+      <td class="name">${esc(p.name)}<div class="code">${esc(p.code)}</div></td>
+      <td>${sys}</td>
+      <td><input type="number" inputmode="numeric" value="${val}" placeholder="實際" oninput="onStockInput('${p.id}',this.value)"></td>
+      <td class="diff" id="diff_${p.id}">${diffCell(val, sys)}</td>
+    </tr>`;
   }).join('');
+  el.innerHTML = `<div class="tbl-scroll"><table class="daily-tbl">
+    <thead><tr><th class="name">品名 / 代號</th><th>系統結算後</th><th>實際盤點</th><th>差異</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+function diffCell(val, sys){
+  if(val===''||val===undefined) return '';
+  const diff = Number(val)-sys;
+  if(diff===0) return `<span class="diff-ok">正確</span>`;
+  if(Math.abs(diff)>=10) return `<span class="diff-warn">${diff>0?'+':''}${diff} 需主管</span>`;
+  if(diff>0) return `<span class="diff-pos">多 +${diff}</span>`;
+  return `<span class="diff-neg">短少 ${diff}</span>`;
 }
 function onStockInput(id, val){
   if(val==='') delete stockInput[id]; else stockInput[id]=val;
   const p = products.find(x=>x.id==id); const sys=Number(p.stock||0);
-  const el = document.getElementById('diff_'+id); if(!el) return;
-  if(val===''){ el.innerHTML=''; return; }
-  const diff = Number(val)-sys;
-  if(diff===0) el.innerHTML=`<span class="diff-ok">正確</span>`;
-  else if(Math.abs(diff)>=10) el.innerHTML=`<span class="diff-warn">${diff>0?'+':''}${diff} 需主管</span>`;
-  else if(diff>0) el.innerHTML=`<span class="diff-pos">多 +${diff}</span>`;
-  else el.innerHTML=`<span class="diff-neg">短少 ${diff}</span>`;
+  const el = document.getElementById('diff_'+id); if(el) el.innerHTML = diffCell(val, sys);
 }
 function resetStockInputs(){ stockInput={}; renderStock(); }
 async function submitStocktake(){
