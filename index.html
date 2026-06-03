@@ -840,14 +840,26 @@ function renderProducts(){
   if(q) list = list.filter(p=>p.name.toLowerCase().includes(q)||p.code.toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q));
   const el = document.getElementById('productList');
   if(list.length===0){ el.innerHTML=`<div class="empty">${products.length?'找不到商品':'此部門尚無商品,點上方新增'}</div>`; return; }
-  el.innerHTML = list.map(p=>`
-    <div class="prod-item" onclick="openProductModal('${p.id}')">
+  const mgr = isManager();
+  el.innerHTML = list.map(p=>{
+    // 多重價格摘要(note 內 JSON)
+    const pr = getPrices(p);
+    let priceTxt = `單價 $${p.price}`;
+    if(pr.staff!==undefined) priceTxt += ` ・員工 $${pr.staff}`;
+    if(pr.treat!==undefined) priceTxt += ` ・招待 $${pr.treat}`;
+    if(pr.member!==undefined) priceTxt += ` ・會員 $${pr.member}`;
+    const noteTxt = (p.note && !/^\s*\{/.test(p.note)) ? ` ・${esc(p.note)}` : ''; // 非 JSON 才顯示
+    const stockCell = mgr
+      ? `<div onclick="event.stopPropagation()"><input type="number" inputmode="numeric" value="${p.stock||0}" onchange="quickSetStock('${p.id}', this.value, this)" style="width:64px; text-align:center; padding:6px 4px; font-weight:700;"><div class="muted" style="font-size:11px; text-align:center;">改庫存</div></div>`
+      : `<div style="font-weight:700;">${p.stock||0}</div><div class="muted" style="font-size:11px;">庫存</div>`;
+    return `<div class="prod-item" onclick="openProductModal('${p.id}')">
       <div style="flex:1;">
         <div class="prod-name">${esc(p.name)} <span class="pill">${esc(p.code)}</span> ${p.category?`<span class="pill cat">${esc(p.category)}</span>`:''} ${p.active===false?'<span class="badge-off">停用</span>':''}</div>
-        <div class="prod-meta">單價 $${p.price}${p.member_price!=null?` ・會員 $${p.member_price}`:''}${p.staff_price!=null?` ・員工 $${p.staff_price}`:''}${p.note?` ・${esc(p.note)}`:''}</div>
+        <div class="prod-meta">${priceTxt}${noteTxt}</div>
       </div>
-      <div class="center"><div style="font-weight:700;">${p.stock||0}</div><div class="muted" style="font-size:11px;">庫存</div></div>
-    </div>`).join('');
+      <div class="center">${stockCell}</div>
+    </div>`;
+  }).join('');
 }
 function openProductModal(id){
   // 櫃台只能檢視,不能新增/編輯
@@ -894,6 +906,20 @@ function nextCode(){
   let max=0;
   products.forEach(p=>{ const m=new RegExp('^'+prefix+'(\\d+)$').exec((p.code||'').trim()); if(m){ const n=parseInt(m[1]); if(n>max) max=n; } });
   return prefix+String(max+1).padStart(2,'0');
+}
+// 主管在商品清單直接改庫存
+async function quickSetStock(id, val, inputEl){
+  if(!isManager()){ alert('此操作需要主管帳號'); return; }
+  const p = products.find(x=>x.id==id); if(!p) return;
+  const n = parseInt(val);
+  if(isNaN(n)){ toast('請輸入數字'); if(inputEl) inputEl.value=p.stock||0; return; }
+  const old = Number(p.stock||0);
+  if(n===old) return;
+  try{
+    await sbUpdate('products', id, {stock:n, updated_at:new Date().toISOString()});
+    p.stock = n;  // 更新本地
+    toast(`${p.name} 庫存 ${old} → ${n}`);
+  }catch(e){ alert('更新失敗:'+e.message); if(inputEl) inputEl.value=old; }
 }
 async function saveProduct(){
   if(!isManager()){ alert('此操作需要主管帳號'); return; }
