@@ -207,7 +207,17 @@
 <!-- ====== 商品主檔 ====== -->
 <section id="page-products" class="page">
   <div class="wrap">
-    <button class="btn green block" onclick="openProductModal()" style="margin-bottom:12px;">➕ 新增商品</button>
+    <button class="btn green block" onclick="openProductModal()" style="margin-bottom:8px;">➕ 新增商品</button>
+    <div class="card">
+      <h2>📄 用 Excel 維護商品</h2>
+      <p class="muted">在電腦下載商品清單 Excel,修改後上傳即可批次更新(以「部門+代號」對應,有則更新、無則新增)。</p>
+      <div class="grid2" style="margin-top:8px;">
+        <button class="btn teal sm" onclick="exportProductsExcel()">⬇ 下載商品清單</button>
+        <button class="btn sm" style="background:#7c3aed;" onclick="document.getElementById('importProdFile').click()">⬆ 上傳 Excel 匯入</button>
+      </div>
+      <input type="file" id="importProdFile" accept=".xlsx,.xls" style="display:none" onchange="importProductsExcel(event)">
+      <p class="muted center" style="margin-top:8px; font-size:12px;">下載的檔含目前全部商品(含兩部門),可同時維護。</p>
+    </div>
     <input class="search-box" id="prodSearch" placeholder="🔍 搜尋商品…">
     <div class="card"><div id="productList"><div class="loading">載入中…</div></div></div>
   </div>
@@ -664,6 +674,82 @@ async function exportStockExcel(){
     XLSX.writeFile(wb, `${currentDept}_盤點差異表_${dateStamp()}.xlsx`);
     toast('已匯出 Excel');
   }catch(e){ alert('匯出失敗:'+e.message); }
+}
+
+/* ================= 商品 Excel 匯出 / 匯入 ================= */
+const PROD_COLS = ['代號','部門','品名','分類','單價','會員價','員工價','計庫存','啟用','備註','目前庫存'];
+async function exportProductsExcel(){
+  if(typeof XLSX==='undefined'){ toast('Excel 元件未載入'); return; }
+  try{
+    // 下載「全部部門」的商品,方便一次維護
+    const all = await sbSelect('products', 'order=dept,sort');
+    const aoa = [PROD_COLS];
+    all.forEach(p=> aoa.push([p.code, p.dept, p.name, p.category||'', Number(p.price)||0,
+      p.member_price==null?'':p.member_price, p.staff_price==null?'':p.staff_price,
+      p.track_stock!==false?'是':'否', p.active!==false?'是':'否', p.note||'', Number(p.stock)||0]));
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:7},{wch:8},{wch:16},{wch:8},{wch:7},{wch:7},{wch:7},{wch:6},{wch:6},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws, '商品清單');
+    XLSX.writeFile(wb, '商品清單_'+dateStamp()+'.xlsx');
+    toast('已下載商品清單');
+  }catch(e){ alert('下載失敗:'+e.message); }
+}
+function importProductsExcel(ev){
+  const file = ev.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', blankrows:false});
+      if(rows.length<2) throw new Error('檔案沒有資料列');
+      // 對應表頭索引
+      const head = rows[0].map(h=>String(h).trim());
+      const idx = name => head.indexOf(name);
+      const ci=idx('代號'), di=idx('部門'), ni=idx('品名'), cati=idx('分類'), pi=idx('單價'),
+        mi=idx('會員價'), si=idx('員工價'), ti=idx('計庫存'), ai=idx('啟用'), noi=idx('備註'), sti=idx('目前庫存');
+      if(ci<0||di<0||ni<0||pi<0) throw new Error('表頭需包含:代號、部門、品名、單價');
+      const num = v => { const n=parseFloat(v); return isNaN(n)?null:n; };
+      const yes = v => { const s=String(v).trim(); return !(s==='否'||s==='N'||s==='no'||s==='false'||s==='0'); };
+      const parsed=[];
+      for(let r=1;r<rows.length;r++){
+        const row=rows[r];
+        const code=String(row[ci]??'').trim(), dept=String(row[di]??'').trim(), nm=String(row[ni]??'').trim();
+        if(!code||!dept||!nm) continue;
+        if(dept!=='販賣部'&&dept!=='泳裝部') throw new Error(`第${r+1}列部門需為「販賣部」或「泳裝部」,目前是「${dept}」`);
+        parsed.push({
+          code, dept, name:nm,
+          category: cati>=0?String(row[cati]??'').trim():'',
+          price: num(row[pi])||0,
+          member_price: mi>=0? num(row[mi]) : null,
+          staff_price: si>=0? num(row[si]) : null,
+          track_stock: ti>=0? yes(row[ti]) : true,
+          active: ai>=0? yes(row[ai]) : true,
+          note: noi>=0?String(row[noi]??'').trim():'',
+          stock: sti>=0? (num(row[sti])||0) : 0
+        });
+      }
+      if(parsed.length===0) throw new Error('沒有有效的商品列');
+      if(!confirm(`即將匯入 ${parsed.length} 筆商品。\n以「部門+代號」對應:已存在→更新,不存在→新增。\n確定執行?`)) { ev.target.value=''; return; }
+      // 取得現有全部商品做對應
+      const existing = await sbSelect('products', 'select=id,dept,code');
+      const key = (d,c)=>d+'||'+c;
+      const map = {}; existing.forEach(p=> map[key(p.dept,p.code)]=p.id);
+      let ins=0, upd=0;
+      const toInsert=[];
+      for(const p of parsed){
+        const id = map[key(p.dept,p.code)];
+        const payload = {...p, updated_at:new Date().toISOString()};
+        if(id){ await sbUpdate('products', id, payload); upd++; }
+        else{ toInsert.push(payload); }
+      }
+      if(toInsert.length){ await sbInsert('products', toInsert); ins=toInsert.length; }
+      await loadProducts(); renderProducts();
+      toast(`匯入完成:新增 ${ins}、更新 ${upd}`);
+    }catch(err){ alert('匯入失敗:'+err.message); }
+    ev.target.value='';
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 /* ================= 搜尋事件 ================= */
